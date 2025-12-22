@@ -12,8 +12,6 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
     Subsystem so it can easily be used in command-based projects.
     """
 
-    _SIM_LOOP_PERIOD: units.second = 0.005
-
     _BLUE_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.fromDegrees(0)
     """Blue alliance sees forward as 0 degrees (toward red alliance wall)"""
     _RED_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.fromDegrees(180)
@@ -143,14 +141,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             drivetrain_constants, arg0, arg1, arg2, arg3
         )
 
-        self._sim_notifier: Notifier | None = None
-        self._last_sim_time: units.second = 0.0
-
         self._has_applied_operator_perspective = False
         """Keep track if we've ever applied the operator perspective before or not"""
-
-        if utils.is_simulation():
-            self._start_sim_thread()
 
     def apply_request(
         self, request: Callable[[], swerve.requests.SwerveRequest]
@@ -181,19 +173,6 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                     else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
                 )
                 self._has_applied_operator_perspective = True
-
-    def _start_sim_thread(self):
-        def _sim_periodic():
-            current_time = utils.get_current_time_seconds()
-            delta_time = current_time - self._last_sim_time
-            self._last_sim_time = current_time
-
-            # use the measured time delta, get battery voltage from WPILib
-            self.update_sim_state(delta_time, RobotController.getBatteryVoltage())
-
-        self._last_sim_time = utils.get_current_time_seconds()
-        self._sim_notifier = Notifier(_sim_periodic)
-        self._sim_notifier.startPeriodic(self._SIM_LOOP_PERIOD)
 
     def add_vision_measurement(self, vision_robot_pose: Pose2d, timestamp: units.second, vision_measurement_std_devs: tuple[float, float, float] | None = None):
         """
