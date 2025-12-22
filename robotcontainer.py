@@ -12,7 +12,7 @@ from commands2.sysid import SysIdRoutine
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-from phoenix6 import swerve
+from phoenix6 import swerve, SignalLogger
 from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
@@ -114,10 +114,14 @@ class RobotContainer:
             self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
         )
 
-        # reset the field-centric heading on left bumper press
+        # Start and stop SignalLogger with the bumpers
         self._joystick.leftBumper().onTrue(
-            self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
-        )
+             commands2.cmd.runOnce(
+                lambda: SignalLogger.start()))
+        
+        self._joystick.rightBumper().onFalse(
+             commands2.cmd.runOnce(
+                lambda: SignalLogger.stop()))
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
