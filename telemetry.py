@@ -1,5 +1,5 @@
 from ntcore import NetworkTableInstance
-from phoenix6 import SignalLogger, swerve, units
+from phoenix6 import swerve, units
 from wpilib import Color, Color8Bit, Mechanism2d, MechanismLigament2d, SmartDashboard
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModulePosition, SwerveModuleState
@@ -13,7 +13,6 @@ class Telemetry:
         :type max_speed: units.meters_per_second
         """
         self._max_speed = max_speed
-        SignalLogger.start()
 
         # What to publish over networktables for telemetry
         self._inst = NetworkTableInstance.getDefault()
@@ -97,15 +96,6 @@ class Telemetry:
             module_states_array.append(state.module_states[i].speed)
             module_targets_array.append(state.module_targets[i].angle.radians())
             module_targets_array.append(state.module_targets[i].speed)
-
-        SignalLogger.write_double_array("DriveState/Pose", pose_array)
-        SignalLogger.write_double_array("DriveState/ModuleStates", module_states_array)
-        SignalLogger.write_double_array(
-            "DriveState/ModuleTargets", module_targets_array
-        )
-        SignalLogger.write_double(
-            "DriveState/OdometryPeriod", state.odometry_period, "seconds"
-        )
 
         # Telemeterize the pose to a Field2d
         self._field_type_pub.set("Field2d")

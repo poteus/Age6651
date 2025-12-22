@@ -7,12 +7,11 @@
 import commands2
 import commands2.cmd
 from commands2.button import CommandXboxController, Trigger
-from commands2.sysid import SysIdRoutine
 
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-from phoenix6 import swerve, SignalLogger
+from phoenix6 import swerve
 from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
@@ -98,30 +97,6 @@ class RobotContainer:
                 )
             )
         )
-
-        # Run SysId routines when holding back/start and X/Y.
-        # Note that each routine should be run exactly once in a single log.
-        (self._joystick.back() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.back() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
-        )
-        (self._joystick.start() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.start() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
-        )
-
-        # Start and stop SignalLogger with the bumpers
-        self._joystick.leftBumper().onTrue(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.start()))
-        
-        self._joystick.rightBumper().onFalse(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.stop()))
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
