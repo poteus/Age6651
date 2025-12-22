@@ -15,23 +15,24 @@ class TunerConstants:
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     _steer_gains = (
         configs.Slot0Configs()
-        .with_k_p(100)
+        .with_k_p(7.5)
         .with_k_i(0)
-        .with_k_d(0.5)
-        .with_k_s(0.1)
-        .with_k_v(1.22) 
-        .with_k_a(0)
+        .with_k_d(0)
+        .with_k_s(0.362)
+        .with_k_v(1.241) 
+        .with_k_a(0.0262)
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
     # output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
     _drive_gains = (
         configs.Slot0Configs()
-        .with_k_p(0.1)
+        .with_k_p(0.0215)
         .with_k_i(0)
         .with_k_d(0)
-        .with_k_s(0)
+        .with_k_s(0.0311)
         .with_k_v(0.124)
+        # Intentionally omimitting kA because accelaration is noisy in velocity control
     )
 
     # The closed-loop output type to use for the steer motors;
@@ -73,6 +74,7 @@ class TunerConstants:
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
+    # speed_at_12_volts: units.meters_per_second = 4.73
     speed_at_12_volts: units.meters_per_second = 4.73
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
