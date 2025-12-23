@@ -208,3 +208,5 @@ __marimo__/
 
 # Icon files from IOS
 Icon^M
+Icon?
+.DS_Store
