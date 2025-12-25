@@ -11,8 +11,9 @@ from commands2.button import CommandXboxController, Trigger
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
+from pathplannerlib.auto import AutoBuilder
 from phoenix6 import swerve
-from wpilib import DriverStation
+from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
@@ -53,6 +54,13 @@ class RobotContainer:
 
         self.drivetrain = TunerConstants.create_drivetrain()
 
+        # Path follower
+        self._auto_chooser = AutoBuilder.buildAutoChooser("Auto1")
+        # SmartDashboard.putData("Auto1", self._auto_chooser)
+        # for auto in AutoBuilder.getAllAutoNames():
+        #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
+        #     self._auto_chooser.addOption(clean, AutoBuilder.buildAuto(clean))
+
         # Configure the button bindings
         self.configureButtonBindings()
 
@@ -62,7 +70,7 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-
+        
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
         self.drivetrain.setDefaultCommand(
@@ -107,4 +115,6 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return commands2.cmd.print_("No autonomous command configured")
+        return self._auto_chooser.getSelected()
+        #return commands2.cmd.print_("No autonomous command configured")
+    
