@@ -30,3 +30,11 @@ robotpy_extras = [
 requires = [
     "phoenix6~=25.4"
 ]
+
+[tool.robotpy.deploy]
+# Add "**/Icon*" to your excludes
+exclude = [
+    "**/Icon*",
+    "**/.DS_Store",
+    "**/__pycache__"
+]
