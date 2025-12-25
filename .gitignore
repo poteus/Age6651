@@ -212,3 +212,6 @@ Icon?
 .DS_Store
 
 "commands/Icon/r"
+
+# CTRE Simulation state
+ctre_sim/
