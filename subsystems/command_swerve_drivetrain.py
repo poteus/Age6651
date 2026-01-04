@@ -1,12 +1,15 @@
 from commands2 import Command, Subsystem
 import math
-from pathplannerlib.auto import AutoBuilder, RobotConfig
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 from phoenix6 import swerve, units, utils
 from typing import Callable, overload
-from wpilib import DriverStation, Notifier, RobotController
+from wpilib import DriverStation
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
+from wpilib import SmartDashboard
+from wpimath.controller import PIDController
+from wpilib import Timer
+import commands2
+from choreo_utils import ChoreoTrajectory
 
 
 class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
@@ -150,38 +153,14 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         # Swerve request to apply during path following
         self._apply_robot_speeds = swerve.requests.ApplyRobotSpeeds()
         
-        self._configure_auto_builder()
+        # PID for Choreo path following
+        self.x_controller = PIDController(3.0, 0.0, 0.0) 
+        self.y_controller = PIDController(3.0, 0.0, 0.0)
+        self.heading_controller = PIDController(2.0, 0.0, 0.0)
+        self.heading_controller.enableContinuousInput(-math.pi, math.pi)
 
-
-
-    def _configure_auto_builder(self):
-        # Check if already configured to prevent the "Aborted" crash
-        if AutoBuilder.isConfigured():
-            return
-        
-        config = RobotConfig.fromGUISettings()
-        AutoBuilder.configure(
-            lambda: self.get_state().pose,   # Supplier of current robot pose
-            self.reset_pose,                 # Consumer for seeding pose against auto
-            lambda: self.get_state().speeds, # Supplier of current robot speeds
-            # Consumer of ChassisSpeeds and feedforwards to drive the robot
-            lambda speeds, feedforwards: self.set_control(
-                self._apply_robot_speeds
-                .with_speeds(ChassisSpeeds.discretize(speeds, 0.020))
-                .with_wheel_force_feedforwards_x(feedforwards.robotRelativeForcesXNewtons)
-                .with_wheel_force_feedforwards_y(feedforwards.robotRelativeForcesYNewtons)
-            ),
-            PPHolonomicDriveController(
-                # PID constants for translation
-                PIDConstants(10.0, 0.0, 0.0),
-                # PID constants for rotation
-                PIDConstants(7.0, 0.0, 0.0)
-            ),
-            config,
-            # Assume the path needs to be flipped for Red vs Blue, this is normally the case
-            lambda: (DriverStation.getAlliance() or DriverStation.Alliance.kBlue) == DriverStation.Alliance.kRed,
-            self # Subsystem for requirements
-        )
+        # Pre-created chassis speeds request for performance
+        self._chassis_speeds_request = swerve.requests.ApplyRobotSpeeds()
 
     def apply_request(
         self, request: Callable[[], swerve.requests.SwerveRequest]
@@ -232,3 +211,62 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :type vision_measurement_std_devs:  tuple[float, float, float] | None
         """
         swerve.SwerveDrivetrain.add_vision_measurement(self, vision_robot_pose, utils.fpga_to_current_time(timestamp), vision_measurement_std_devs)
+
+    def get_choreo_command(self, trajectory:ChoreoTrajectory, trajectory_name: str):
+        ''' Returns a command that follows the specified Choreo trajectory. '''
+       
+        timer = Timer()
+        return commands2.FunctionalCommand(
+            # On Start: Reset the robot pose to the start of the path
+            lambda: (
+                timer.restart(),
+                self.reset_pose(trajectory.get_initial_pose(
+                    DriverStation.getAlliance() == DriverStation.Alliance.kRed))
+            ),
+            # On Execute: Drive using our helper
+            lambda: self._drive_from_choreo(trajectory, timer.get()),
+            # On End: Stop the robot
+            lambda interrupted: self.set_control(swerve.requests.Idle()),
+            # Is Finished: When the timer exceeds trajectory duration
+            lambda: timer.hasElapsed(trajectory.get_total_time()),
+            self
+        )
+
+    def _drive_from_choreo(self, trajectory:ChoreoTrajectory, time):
+        ''' Follows the trajectory from Choreo with PID corrections. '''
+        is_red = DriverStation.getAlliance() == DriverStation.Alliance.kRed
+        sample = trajectory.sample_at(time, is_red)
+        pose = self.get_state().pose
+
+        # Calculate corrections (Feedback) for the 3 velocities
+        vx_feedback = self.x_controller.calculate(pose.X(), sample.x)
+        vy_feedback = self.y_controller.calculate(pose.Y(), sample.y)
+        omega_feedback = self.heading_controller.calculate(
+            pose.rotation().radians(), sample.heading
+        )
+
+        # Combine with Choreo's velocities (Feedforward)
+        vx_total = sample.vx + vx_feedback
+        vy_total = sample.vy + vy_feedback
+        omega_total = sample.omega + omega_feedback
+
+        # Convert Field-Relative to Robot-Relative
+        # This tells the robot: "I want to go X meters/sec toward the Red Wall, 
+        # regardless of which way I am currently facing."
+        speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            vx_total,
+            vy_total,
+            omega_total,
+            pose.rotation() # The robot uses its current gyro heading to do the math
+        )
+        
+        # Optional: Add discretization to prevent "curving"
+        speeds = ChassisSpeeds.discretize(speeds, 0.020)
+
+        self.set_control(self._chassis_speeds_request.with_speeds(speeds))
+
+        # Log the errors (Target - Actual)
+        SmartDashboard.putNumber("Auto/X_Error", sample.x - pose.X())
+        SmartDashboard.putNumber("Auto/Y_Error", sample.y - pose.Y())
+        SmartDashboard.putNumber("Auto/Target_VX", sample.vx)
+        SmartDashboard.putNumber("Auto/Actual_VX", self.get_state().speeds.vx)
