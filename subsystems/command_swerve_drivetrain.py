@@ -1,10 +1,14 @@
+######################################################################################
+# Command-based Swerve Drivetrain subsystem for use with Phoenix 6 and PathPlanner
+
 from commands2 import Command, Subsystem
-import math
-from pathplannerlib.auto import AutoBuilder, RobotConfig
+
+import commands2
+from pathplannerlib.auto import AutoBuilder, RobotConfig, NamedCommands
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 from phoenix6 import swerve, units, utils
 from typing import Callable, overload
-from wpilib import DriverStation, Notifier, RobotController
+from wpilib import DriverStation
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
 
