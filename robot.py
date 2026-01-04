@@ -5,11 +5,11 @@
 # the WPILib BSD license file in the root directory of this project.
 #
 
-import wpilib
 import commands2
 import typing
 
 from robotcontainer import RobotContainer
+from wpilib import DataLogManager, DriverStation
 
 
 class MyRobot(commands2.TimedCommandRobot):
@@ -25,11 +25,14 @@ class MyRobot(commands2.TimedCommandRobot):
         This function is run when the robot is first started up and should be used for any
         initialization code.
         """
+        # Instantiate our RobotContainer.  This will perform all our
+        DataLogManager.start()
+        DriverStation.startDataLog(DataLogManager.getLog())
 
         # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         # autonomous chooser on the dashboard.
         self.container = RobotContainer()
-
+    
     def robotPeriodic(self) -> None:
         """This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
         that you want ran during disabled, autonomous, teleoperated and test.
