@@ -75,13 +75,16 @@ class TunerConstants:
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
     # speed_at_12_volts: units.meters_per_second = 4.73
-    speed_at_12_volts: units.meters_per_second = 4.73
+    speed_at_12_volts: units.meters_per_second = 1.5
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
     # This may need to be tuned to your individual robot
     _couple_ratio = 3.5714285714285716
 
-    _drive_gear_ratio = 6.746031746031747
+    _drive_gear_ratio_Murphy = 6.75
+    _drive_gear_ratio_Crimson = 5.91
+    _drive_gear_ratio = _drive_gear_ratio_Crimson
+
     _steer_gear_ratio = 12.8
     _wheel_radius: units.meter = inchesToMeters(2)
 

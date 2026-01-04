@@ -11,7 +11,6 @@ from commands2.button import CommandXboxController, Trigger
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-from pathplannerlib.auto import AutoBuilder
 from phoenix6 import swerve
 from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Rotation2d
@@ -55,7 +54,7 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Path follower
-        self._auto_chooser = AutoBuilder.buildAutoChooser("Auto1")
+        
         # SmartDashboard.putData("Auto1", self._auto_chooser)
         # for auto in AutoBuilder.getAllAutoNames():
         #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
@@ -115,6 +114,6 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return self._auto_chooser.getSelected()
-        #return commands2.cmd.print_("No autonomous command configured")
+        # return self._auto_chooser.getSelected()
+        return commands2.cmd.print_("No autonomous command configured")
     
