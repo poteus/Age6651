@@ -13,9 +13,15 @@ from telemetry import Telemetry
 
 from pathplannerlib.auto import AutoBuilder
 from phoenix6 import swerve
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
+
+from wpilib import SendableChooser, SmartDashboard
+from choreo_utils import ChoreoTrajectory
+from generated.tuner_constants import TunerConstants
+# Import your reconstructed drivetrain
+from subsystems.command_swerve_drivetrain import CommandSwerveDrivetrain
 
 
 class RobotContainer:
@@ -54,14 +60,22 @@ class RobotContainer:
 
         self.drivetrain = TunerConstants.create_drivetrain()
 
-        # Path follower
-        self._auto_chooser = AutoBuilder.buildAutoChooser("Auto1")
-        # SmartDashboard.putData("Auto1", self._auto_chooser)
-        # for auto in AutoBuilder.getAllAutoNames():
-        #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
-        #     self._auto_chooser.addOption(clean, AutoBuilder.buildAuto(clean))
+        # Pre-load Trajectories (Saves CPU time during the match)
+        # These names must match your .traj filenames in deploy/choreo
+        self.traj_test1 = ChoreoTrajectory("test1")
+        # self.traj_test2 = ChoreoTrajectory("test2")
 
-        # Configure the button bindings
+        # Setup the Chooser
+        self.chooser = SendableChooser()
+        
+        # Add options to the dashboard
+        # We use a lambda to delay the command creation until the match starts
+        self.chooser.setDefaultOption("Test 1 Path", self.traj_test1)
+        # self.chooser.addOption("Test 2 Path", self.traj_test2)
+
+        # Put the chooser on the dashboard
+        SmartDashboard.putData("Auto Mode", self.chooser)
+
         self.configureButtonBindings()
 
     def configureButtonBindings(self) -> None:
@@ -115,6 +129,11 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return self._auto_chooser.getSelected()
-        #return commands2.cmd.print_("No autonomous command configured")
+        selected_traj = self.chooser.getSelected()
+        
+        if selected_traj is None:
+            return None
+            
+        # Call the helper we just fixed in command_swerve_drivetrain.py
+        return self.drivetrain.get_choreo_command(selected_traj, "AutoPath")
     
