@@ -1,12 +1,15 @@
 from commands2 import Command, Subsystem
-import math
-from pathplannerlib.auto import AutoBuilder, RobotConfig
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
+from wpilib import DriverStation
+
+from math import pi
+
+from choreolib import Choreo, ChoreoTrajectory
+from choreolib.commands import ChoreoAutoCommandFactory
+
 from phoenix6 import swerve, units, utils
 from typing import Callable, overload
-from wpilib import DriverStation, Notifier, RobotController
 from wpimath.geometry import Pose2d, Rotation2d
-from wpimath.kinematics import ChassisSpeeds
+from wpimath.controller import PIDController
 
 
 class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
@@ -150,38 +153,39 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         # Swerve request to apply during path following
         self._apply_robot_speeds = swerve.requests.ApplyRobotSpeeds()
         
-        self._configure_auto_builder()
+        # Translation constants (adjust these during testing)
+        self.x_controller = PIDController(3.0, 0.0, 0.0)
+        self.y_controller = PIDController(3.0, 0.0, 0.0)
+
+        # Rotation constants (usually higher P than translation)
+        self.rot_controller = PIDController(2.0, 0.0, 0.0)
+        # Rotation is circular (continuous), so we must tell the controller that -PI is the same as PI
+        self.rot_controller.enableContinuousInput(-pi, pi)
 
 
 
-    def _configure_auto_builder(self):
-        # Check if already configured to prevent the "Aborted" crash
-        if AutoBuilder.isConfigured():
-            return
-        
-        config = RobotConfig.fromGUISettings()
-        AutoBuilder.configure(
-            lambda: self.get_state().pose,   # Supplier of current robot pose
-            self.reset_pose,                 # Consumer for seeding pose against auto
-            lambda: self.get_state().speeds, # Supplier of current robot speeds
-            # Consumer of ChassisSpeeds and feedforwards to drive the robot
-            lambda speeds, feedforwards: self.set_control(
-                self._apply_robot_speeds
-                .with_speeds(ChassisSpeeds.discretize(speeds, 0.020))
-                .with_wheel_force_feedforwards_x(feedforwards.robotRelativeForcesXNewtons)
-                .with_wheel_force_feedforwards_y(feedforwards.robotRelativeForcesYNewtons)
-            ),
-            PPHolonomicDriveController(
-                # PID constants for translation
-                PIDConstants(10.0, 0.0, 0.0),
-                # PID constants for rotation
-                PIDConstants(7.0, 0.0, 0.0)
-            ),
-            config,
-            # Assume the path needs to be flipped for Red vs Blue, this is normally the case
-            lambda: (DriverStation.getAlliance() or DriverStation.Alliance.kBlue) == DriverStation.Alliance.kRed,
-            self # Subsystem for requirements
+    def get_choreo_routine(self, trajectory_name: str) -> Command:
+        '''
+        Uses the official ChoreoLib to create a command that follows a trajectory.
+        '''
+        return Choreo.choreoSwerveCommand(
+            Choreo.getTrajectory(trajectory_name),
+            self.get_pose,      # Lambda to get current robot pose
+            self.x_controller,  # PID for X (standard PIDController)
+            self.y_controller,  # PID for Y
+            self.rot_controller,# PID for Rotation
+            self.drive_at_speeds,# Lambda to drive the robot using ChassisSpeeds
+            lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed, # Mirror for Red
+            self                # Requirements
         )
+    
+    def drive_at_speeds(self, speeds):
+        ''' Drives the robot at the specified ChassisSpeeds. Needed this for ChoreoLib integration. '''
+        self.set_control(self._apply_robot_speeds.with_speeds(speeds))
+
+    def get_pose(self) -> Pose2d:
+        ''' Returns the current robot pose. Needed this for ChoreoLib integration. '''
+        return self.get_state().pose
 
     def apply_request(
         self, request: Callable[[], swerve.requests.SwerveRequest]
