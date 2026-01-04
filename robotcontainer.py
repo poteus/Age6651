@@ -55,7 +55,8 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Path follower
-        self._auto_chooser = AutoBuilder.buildAutoChooser("Auto1")
+        self._auto_chooser = AutoBuilder.buildAutoChooser()
+        SmartDashboard.putData("Auto Chooser", self._auto_chooser)
         # SmartDashboard.putData("Auto1", self._auto_chooser)
         # for auto in AutoBuilder.getAllAutoNames():
         #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
