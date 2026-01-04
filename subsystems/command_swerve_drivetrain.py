@@ -159,6 +159,10 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
 
 
     def _configure_auto_builder(self):
+        ''' Configures the AutoBuilder for path following with this drivetrain.'''
+        # Register Named Commands here
+        NamedCommands.registerCommand("IntakeOn", commands2.cmd.print_("Intake Activated"))
+        NamedCommands.registerCommand("Shoot", commands2.cmd.print_("Shooting Note"))
         # Check if already configured to prevent the "Aborted" crash
         if AutoBuilder.isConfigured():
             return
