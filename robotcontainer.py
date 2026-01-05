@@ -35,6 +35,22 @@ class RobotContainer:
             0.75
         )  # 3/4 of a rotation per second max angular velocity
 
+        # Inside RobotContainer.__init__
+        serial = wpilib.RobotController.getSerialNumber()
+        print(f"Robot Serial Number: {serial}")
+
+        if serial == "CRIMSON_SERIAL":
+            # Crimson has two cameras
+            #self.vision = Vision(["limelight-front", "limelight-back"])
+            from generated.Crimson_tuner_constants import TunerConstants 
+            pass
+        else:
+            # Murphy (or anything else) has one
+            #self.vision = Vision(["limelight-front"])
+            from generated.Murphy_tuner_constants import TunerConstants 
+            pass
+
+
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
             swerve.requests.FieldCentric()
