@@ -70,3 +70,44 @@ FINAL VALUES FOR steering
         Ks = 0.362
         Kv = 1.241  # Averaged all 3 'K'
         kA = 0.0262
+
+
+ --- Crimson ---
+
+    Motor 11
+        P = 0.31642
+
+        Ks = 0.16269
+        Kv = 2.0801
+        Ka = 0.053107
+
+ Motor 12
+        P = 1.1133
+
+        Ks = 0.18558
+        Kv = 2.056
+        Ka = 0.12012
+
+
+ Motor 13
+        P = 1.1743
+
+        Ks = 0.20675
+        Kv = 2.0387
+        Ka = 0.080308
+
+
+Motor 14
+        P = 0.28466
+
+        Ks = 0.18772
+        Kv = 2.0495
+        Ka = 0.032043
+
+FINAL VALUES FOR steering
+
+        P = .16 # DO NOT AVERAGE P (Chosen) - Between 0.08 and .030 for X60
+                # but we are using X44...
+        Ks = 0.185685
+        Kv = 2.056075  # Averaged all 3 'K'
+        kA = 0.0713945
