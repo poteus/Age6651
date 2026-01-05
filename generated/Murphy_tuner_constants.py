@@ -15,11 +15,11 @@ class TunerConstants:
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     _steer_gains = (
         configs.Slot0Configs()
-        .with_k_p(7.5)
+        .with_k_p(0.16)
         .with_k_i(0)
         .with_k_d(0)
         .with_k_s(0.362)
-        .with_k_v(1.241) 
+        .with_k_v(1.241)
         .with_k_a(0.0262)
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
@@ -31,8 +31,8 @@ class TunerConstants:
         .with_k_i(0)
         .with_k_d(0)
         .with_k_s(0.0311)
-        .with_k_v(0.124)
-        # Intentionally omimitting kA because accelaration is noisy in velocity control
+        .with_k_v(0.1240)
+        .with_k_a(0.0029)
     )
 
     # The closed-loop output type to use for the steer motors;
@@ -74,16 +74,15 @@ class TunerConstants:
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
-    # speed_at_12_volts: units.meters_per_second = 4.73
-    speed_at_12_volts: units.meters_per_second = 4.73
+    speed_at_12_volts: units.meters_per_second = 0
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
     # This may need to be tuned to your individual robot
-    _couple_ratio = 3.5714285714285716
+    _couple_ratio = 3.125
 
-    _drive_gear_ratio = 6.746031746031747
-    _steer_gear_ratio = 12.8
-    _wheel_radius: units.meter = inchesToMeters(2)
+    _drive_gear_ratio = 5.902777777777778
+    _steer_gear_ratio = 21.428571428571427
+    _wheel_radius: units.meter = inchesToMeters(0)
 
     _invert_left_side = False
     _invert_right_side = True
@@ -133,45 +132,45 @@ class TunerConstants:
     _front_left_drive_motor_id = 22
     _front_left_steer_motor_id = 12
     _front_left_encoder_id = 32
-    _front_left_encoder_offset: units.rotation = -0.0263671875
-    _front_left_steer_motor_inverted = False
+    _front_left_encoder_offset: units.rotation = -0.29541015625
+    _front_left_steer_motor_inverted = True
     _front_left_encoder_inverted = False
 
-    _front_left_x_pos: units.meter = inchesToMeters(12)
-    _front_left_y_pos: units.meter = inchesToMeters(12)
+    _front_left_x_pos: units.meter = inchesToMeters(0)
+    _front_left_y_pos: units.meter = inchesToMeters(0)
 
     # Front Right
     _front_right_drive_motor_id = 21
     _front_right_steer_motor_id = 11
     _front_right_encoder_id = 31
-    _front_right_encoder_offset: units.rotation = -0.006103515625
-    _front_right_steer_motor_inverted = False
+    _front_right_encoder_offset: units.rotation = 0.241455078125
+    _front_right_steer_motor_inverted = True
     _front_right_encoder_inverted = False
 
-    _front_right_x_pos: units.meter = inchesToMeters(12)
-    _front_right_y_pos: units.meter = inchesToMeters(-12)
+    _front_right_x_pos: units.meter = inchesToMeters(0)
+    _front_right_y_pos: units.meter = inchesToMeters(-0)
 
     # Back Left
     _back_left_drive_motor_id = 23
     _back_left_steer_motor_id = 13
     _back_left_encoder_id = 33
-    _back_left_encoder_offset: units.rotation = 0.230712890625
-    _back_left_steer_motor_inverted = False
+    _back_left_encoder_offset: units.rotation = -0.44140625
+    _back_left_steer_motor_inverted = True
     _back_left_encoder_inverted = False
 
-    _back_left_x_pos: units.meter = inchesToMeters(-12)
-    _back_left_y_pos: units.meter = inchesToMeters(12)
+    _back_left_x_pos: units.meter = inchesToMeters(-0)
+    _back_left_y_pos: units.meter = inchesToMeters(0)
 
     # Back Right
     _back_right_drive_motor_id = 24
     _back_right_steer_motor_id = 14
     _back_right_encoder_id = 34
-    _back_right_encoder_offset: units.rotation = -0.077392578125
-    _back_right_steer_motor_inverted = False
+    _back_right_encoder_offset: units.rotation = -0.033935546875
+    _back_right_steer_motor_inverted = True
     _back_right_encoder_inverted = False
 
-    _back_right_x_pos: units.meter = inchesToMeters(-12)
-    _back_right_y_pos: units.meter = inchesToMeters(-12)
+    _back_right_x_pos: units.meter = inchesToMeters(-0)
+    _back_right_y_pos: units.meter = inchesToMeters(-0)
 
 
     front_left = _constants_creator.create_module_constants(
