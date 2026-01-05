@@ -28,28 +28,27 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
+
+        # Detect which roborio is running to know if it is Murphy or Crimson
+        serial = wpilib.RobotController.getSerialNumber()
+        print(f"Robot Serial Number: {serial}")
+        if serial == "03415952":
+            print("This is Crimson.")
+            # Crimson has two cameras
+            #self.vision = Vision(["limelight-front", "limelight-back"])
+            from generated.Crimson_tuner_constants import TunerConstants 
+        else:
+            print("This is Murphy.")
+            # Murphy (or anything else) has one
+            #self.vision = Vision(["limelight-front"])
+            from generated.Murphy_tuner_constants import TunerConstants 
+
         self._max_speed = (
             TunerConstants.speed_at_12_volts
         )  # speed_at_12_volts desired top speed
         self._max_angular_rate = rotationsToRadians(
             0.75
         )  # 3/4 of a rotation per second max angular velocity
-
-        # Inside RobotContainer.__init__
-        serial = wpilib.RobotController.getSerialNumber()
-        print(f"Robot Serial Number: {serial}")
-
-        if serial == "CRIMSON_SERIAL":
-            # Crimson has two cameras
-            #self.vision = Vision(["limelight-front", "limelight-back"])
-            from generated.Crimson_tuner_constants import TunerConstants 
-            pass
-        else:
-            # Murphy (or anything else) has one
-            #self.vision = Vision(["limelight-front"])
-            from generated.Murphy_tuner_constants import TunerConstants 
-            pass
-
 
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
