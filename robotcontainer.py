@@ -8,12 +8,11 @@ import commands2
 import commands2.cmd
 from commands2.button import CommandXboxController, Trigger
 
-from generated.tuner_constants import TunerConstants
+from generated.Murphy_tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-from pathplannerlib.auto import AutoBuilder
 from phoenix6 import swerve
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
