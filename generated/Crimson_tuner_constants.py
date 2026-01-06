@@ -15,7 +15,7 @@ class TunerConstants:
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     _steer_gains = (
         configs.Slot0Configs()
-        .with_k_p(0.16)
+        .with_k_p(0.2)
         .with_k_i(0)
         .with_k_d(0)
         .with_k_s(0.185685)
@@ -27,11 +27,11 @@ class TunerConstants:
     # output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
     _drive_gains = (
         configs.Slot0Configs()
-        .with_k_p(0.1)
+        .with_k_p(0.0215)
         .with_k_i(0)
         .with_k_d(0)
-        .with_k_s(0)
-        .with_k_v(0.124)
+        .with_k_s(0.0661195)
+        .with_k_v(0.122445)
     )
 
     # The closed-loop output type to use for the steer motors;
@@ -131,7 +131,7 @@ class TunerConstants:
     _front_left_drive_motor_id = 22
     _front_left_steer_motor_id = 12
     _front_left_encoder_id = 32
-    _front_left_encoder_offset: units.rotation = -0.29541015625
+    _front_left_encoder_offset: units.rotation = -0.293701171875
     _front_left_steer_motor_inverted = True
     _front_left_encoder_inverted = False
 
@@ -142,7 +142,7 @@ class TunerConstants:
     _front_right_drive_motor_id = 21
     _front_right_steer_motor_id = 11
     _front_right_encoder_id = 31
-    _front_right_encoder_offset: units.rotation = 0.241455078125
+    _front_right_encoder_offset: units.rotation = 0.24072265625
     _front_right_steer_motor_inverted = True
     _front_right_encoder_inverted = False
 
@@ -153,7 +153,7 @@ class TunerConstants:
     _back_left_drive_motor_id = 23
     _back_left_steer_motor_id = 13
     _back_left_encoder_id = 33
-    _back_left_encoder_offset: units.rotation = -0.44140625
+    _back_left_encoder_offset: units.rotation = -0.440185546875
     _back_left_steer_motor_inverted = True
     _back_left_encoder_inverted = False
 
@@ -164,7 +164,7 @@ class TunerConstants:
     _back_right_drive_motor_id = 24
     _back_right_steer_motor_id = 14
     _back_right_encoder_id = 34
-    _back_right_encoder_offset: units.rotation = -0.033935546875
+    _back_right_encoder_offset: units.rotation = -0.0341796875
     _back_right_steer_motor_inverted = True
     _back_right_encoder_inverted = False
 

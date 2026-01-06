@@ -18,9 +18,9 @@ class TunerConstants:
         .with_k_p(0.16)
         .with_k_i(0)
         .with_k_d(0)
-        .with_k_s(0.362)
-        .with_k_v(1.241)
-        .with_k_a(0.0262)
+        .with_k_s(0.60002)
+        .with_k_v(2.0609)
+        .with_k_a(0.096799)
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
@@ -74,7 +74,7 @@ class TunerConstants:
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
-    speed_at_12_volts: units.meters_per_second = 0
+    speed_at_12_volts: units.meters_per_second = 2
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
     # This may need to be tuned to your individual robot

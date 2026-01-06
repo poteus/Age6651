@@ -70,3 +70,39 @@ FINAL VALUES FOR steering
         Ks = 0.362
         Kv = 1.241  # Averaged all 3 'K'
         kA = 0.0262
+
+    
+Motor 21
+        P = 0.0011956
+
+        Ks = 0.069696
+        Kv = 0.12104
+        Ka = 0.0011639
+
+Motor 22
+        P = 0.00017588
+
+        Ks = 0.060427
+        Kv = 0.12173
+        Ka = 0.0014289
+
+Motor 23
+        P = 0.00001907
+
+        Ks = 0.064631
+        Kv = 0.12296
+        Ka = 0.0011524
+
+Motor 24
+        P = 0.00022419
+
+        Ks = 0.069724
+        Kv = 0.12405
+        Ka = 0.0012916
+
+FINAL VALUES FOR steering
+
+        P = 0.0215 
+        Ks = 0.0661195
+        Kv = 0.122445  # Averaged all 3 'K'
+        kA = 0.0012592
