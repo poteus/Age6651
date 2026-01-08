@@ -51,6 +51,7 @@ class RobotContainer:
             0.75
         )  # 3/4 of a rotation per second max angular velocity
 
+        print("With MOTION MAGIC.")
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
             swerve.requests.FieldCentric()
@@ -60,7 +61,8 @@ class RobotContainer:
             )  # Add a 10% deadband
             .with_drive_request_type(
                 swerve.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE
-            )  # Use open-loop control for drive motors
+            ).  # Use open-loop control for drive motors
+            with_steer_request_type(swerve.requests.SwerveModule.SteerRequestType.MOTION_MAGIC_EXPO)
         )
         self._brake = swerve.requests.SwerveDriveBrake()
         self._point = swerve.requests.PointWheelsAt()
