@@ -13,7 +13,7 @@ class TunerConstants:
 
     # The steer motor uses any SwerveModule.SteerRequestType control request with the
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
-    _steer_gains = (
+    _steer_gains_volts = ( # VOLTS
         configs.Slot0Configs()
         .with_k_p(0.2)
         .with_k_i(0)
@@ -23,9 +23,19 @@ class TunerConstants:
         .with_k_a(0.09757475)
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
+    _steer_gains = (  # TORQUE_CURRENT_FOC
+        configs.Slot0Configs()
+        .with_k_p(60.0) # This need to he high to keep wheel pointed
+        .with_k_i(0)
+        .with_k_d(2.0)  # Dampens the Kraken's high-speed torque
+        .with_k_s(3.0)  # Overcomes the pivot friction on carpet
+        .with_k_v(2.0)
+        .with_k_a(0.1)        
+        .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
+    )
     # When using closed-loop control, the drive motor uses the control
     # output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
-    _drive_gains = (
+    _drive_gains_volts = ( # VOLTS
         configs.Slot0Configs()
         .with_k_p(0.05668725)
         .with_k_i(0)
