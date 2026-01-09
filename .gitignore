@@ -231,3 +231,4 @@ Icon?
 # Phoenix 6 / CTRE Simulation folders
 ctre_sim/
 *.ctre_sim
+logs/
