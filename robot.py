@@ -45,6 +45,8 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def disabledInit(self) -> None:
         """This function is called once each time the robot enters Disabled mode."""
+        from phoenix6 import SignalLogger
+        SignalLogger.stop()
         pass
 
     def disabledPeriodic(self) -> None:
