@@ -13,33 +13,53 @@ class TunerConstants:
 
     # The steer motor uses any SwerveModule.SteerRequestType control request with the
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
-    _steer_gains = (
+    _steer_gains_volts = ( # VOLTS
         configs.Slot0Configs()
         .with_k_p(0.2)
         .with_k_i(0)
-        .with_k_d(0)
-        .with_k_s(0.185685)
-        .with_k_v(2.056075)
-        .with_k_a(0.0713945)
+        .with_k_d(0.005)
+        .with_k_s(0.25) # 0.4917325)
+        .with_k_v(2.08515)
+        .with_k_a(0.09757475)
+        .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
+    )
+    _steer_gains = (  # TORQUE_CURRENT_FOC
+        configs.Slot0Configs()
+        .with_k_p(10) # This need to he high to keep wheel pointed
+        .with_k_i(0)
+        .with_k_d(4)  # Dampens the Kraken's high-speed torque
+        .with_k_s(5)  # Overcomes the pivot friction on carpet
+        .with_k_v(22.29)
+        .with_k_a(0.36)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
     # output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
-    _drive_gains = (
+    _drive_gains_volts = ( # VOLTS
         configs.Slot0Configs()
-        .with_k_p(0.0215)
+        .with_k_p(0.05668725)
         .with_k_i(0)
         .with_k_d(0)
-        .with_k_s(0.0661195)
-        .with_k_v(0.122445)
+        .with_k_s(0.0981045)
+        .with_k_v(0.122585)
+        .with_k_a(0.0042655)
+    )
+    _drive_gains = ( # TORQUE_CURRENT_FOC
+        configs.Slot0Configs()
+        .with_k_p(5.06) # Current starts around 5-10 amps
+        .with_k_i(0)
+        .with_k_d(0.15) # A tiny bit of D helps FOC stability
+        .with_k_s(3.26) # It takes ~2-4 amps just to break friction
+        .with_k_v(2.19) # Ballpark Amps per rotation/sec
+        .with_k_a(0.04) # Acceleration constant
     )
 
     # The closed-loop output type to use for the steer motors;
     # This affects the PID/FF gains for the steer motors
-    _steer_closed_loop_output = swerve.ClosedLoopOutputType.VOLTAGE
+    _steer_closed_loop_output = swerve.ClosedLoopOutputType.TORQUE_CURRENT_FOC
     # The closed-loop output type to use for the drive motors;
     # This affects the PID/FF gains for the drive motors
-    _drive_closed_loop_output = swerve.ClosedLoopOutputType.VOLTAGE
+    _drive_closed_loop_output = swerve.ClosedLoopOutputType.TORQUE_CURRENT_FOC
 
     # The type of motor used for the drive motor
     _drive_motor_type = swerve.DriveMotorArrangement.TALON_FX_INTEGRATED
