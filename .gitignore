@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+.pytest_cache/
 *.py[codz]
 *$py.class
 
@@ -207,11 +208,27 @@ marimo/_lsp/
 __marimo__/
 
 # Icon files from IOS
-Icon^M
+Icon[[:cntrl:]]
 Icon?
 .DS_Store
+.AappleDouble
+.LSOverride
 
-"commands/Icon/r"
+# FRC / WPILib
+.deploy/
+**/build/
+**/bin/
+*.hoot
+*.wpilog
+.wpilib/
 
-# CTRE Simulation state
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Phoenix 6 / CTRE Simulation folders
 ctre_sim/
+*.ctre_sim
+logs/
