@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 #
 # Copyright (c) FIRST and other WPILib contributors.
 # Open Source Software; you can modify and/or share it under the terms of
@@ -264,4 +264,3 @@ class RobotContainer:
         :returns: the command to run in autonomous
         """
         return commands2.cmd.print_("No autonomous command configured")
->>>>>>> origin/branch-Rivera
