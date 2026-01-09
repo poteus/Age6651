@@ -25,12 +25,12 @@ class TunerConstants:
     )
     _steer_gains = (  # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(60.0) # This need to he high to keep wheel pointed
+        .with_k_p(10) # This need to he high to keep wheel pointed
         .with_k_i(0)
-        .with_k_d(2.0)  # Dampens the Kraken's high-speed torque
-        .with_k_s(3.0)  # Overcomes the pivot friction on carpet
-        .with_k_v(2.0)
-        .with_k_a(0.1)        
+        .with_k_d(4)  # Dampens the Kraken's high-speed torque
+        .with_k_s(5)  # Overcomes the pivot friction on carpet
+        .with_k_v(22.29)
+        .with_k_a(0.36)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
@@ -46,12 +46,12 @@ class TunerConstants:
     )
     _drive_gains = ( # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(5.0) # Current starts around 5-10 amps
+        .with_k_p(5.06) # Current starts around 5-10 amps
         .with_k_i(0)
-        .with_k_d(0.1) # A tiny bit of D helps FOC stability
-        .with_k_s(2.5) # It takes ~2-4 amps just to break friction
-        .with_k_v(1.5) # Ballpark Amps per rotation/sec
-        .with_k_a(0.1) # Acceleration constant
+        .with_k_d(0.15) # A tiny bit of D helps FOC stability
+        .with_k_s(3.26) # It takes ~2-4 amps just to break friction
+        .with_k_v(2.19) # Ballpark Amps per rotation/sec
+        .with_k_a(0.04) # Acceleration constant
     )
 
     # The closed-loop output type to use for the steer motors;
@@ -68,7 +68,7 @@ class TunerConstants:
 
     # The remote sensor feedback type to use for the steer motors;
     # When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
-    _steer_feedback_type = swerve.SteerFeedbackType.FUSED_CANCODER
+    _steer_feedback_type = swerve.SteerFeedbackType.REMOTE_CANCODER
 
     # The stator current at which the wheels start to slip;
     # This needs to be tuned to your individual robot
