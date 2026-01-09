@@ -183,7 +183,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                 stepVoltage=7.0,
                 # Log state with SignalLogger class
                 recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                    "sysid-test-state", SysIdRoutineLog.stateEnumToString(state)
                 ),
             ),
             SysIdRoutine.Mechanism(
@@ -205,7 +205,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                 # Use default timeout (10 s)
                 # Log state with SignalLogger class
                 recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                    "sysid-test-state", SysIdRoutineLog.stateEnumToString(state)
                 ),
             ),
             SysIdRoutine.Mechanism(
@@ -227,7 +227,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         See the documentation of swerve.requests.SysIdSwerveRotation for info on importing the log to SysId.
         """
 
-        self._sys_id_routine_to_apply = self._sys_id_routine_translation
+        self._sys_id_routine_to_apply = self._sys_id_routine_rotation
         """The SysId routine to test"""
 
         if utils.is_simulation():
