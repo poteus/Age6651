@@ -1,0 +1,11 @@
+# Ignore simulation and local data
+logs/
+ctre_sim/
+*.hoot
+*.wpilog
+
+# Ignore Python environment and cache
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
