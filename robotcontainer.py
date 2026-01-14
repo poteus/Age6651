@@ -14,6 +14,7 @@ from telemetry import Telemetry
 
 from phoenix6 import swerve, SignalLogger
 from subsystems.vision import Vision
+from subsystems.shooter import Shooter
 
 import wpilib
 from wpilib import DriverStation
@@ -73,6 +74,8 @@ class RobotContainer:
         self._joystick = CommandXboxController(0)
 
         self.drivetrain = TunerConstants.create_drivetrain()
+
+        self.shooter = Shooter()
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -136,15 +139,7 @@ class RobotContainer:
 
         # Start and stop SignalLogger with the bumpers
         self._joystick.leftBumper().onTrue(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.start()))
-        
-        self._joystick.rightBumper().onFalse(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.stop()))
-
-        self.drivetrain.register_telemetry(
-            lambda state: self._logger.telemeterize(state)
+            self.shooter.run_shooter(11.0) 
         )
 
     def getAutonomousCommand(self) -> commands2.Command:
