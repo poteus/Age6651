@@ -47,10 +47,11 @@ class RobotContainer:
             from generated.Murphy_tuner_constants import TunerConstants 
 
         self._max_speed = (
-            TunerConstants.speed_at_12_volts
+            0
         )  # speed_at_12_volts desired top speed
+
         self._max_angular_rate = rotationsToRadians(
-            0.75
+            0
         )  # 3/4 of a rotation per second max angular velocity
 
         print("With MOTION MAGIC.")
