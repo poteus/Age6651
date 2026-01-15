@@ -17,23 +17,25 @@ class Shooter(Subsystem):
         """
         super().__init__()
 
-        self.shooter_motor = hardware.TalonFX(50)
-        self.shooter_motor.setInverted(False)
+        self.shooter_motor = hardware.TalonFX(50)      # Talon FX motor controller with CAN ID 50
+        self.shooter_motor.setInverted(False)          # Set motor inversion as needed
 
         # Control requests
-        self.voltage_request = controls.VoltageOut(0) 
-        self.velocity_request = controls.VelocityTorqueCurrentFOC(0)
-        self.torque_request = controls.TorqueCurrentFOC(0)
-        self.break_request = controls.VoltageOut(0)
+        # self.voltage_request = controls.VoltageOut(0)                 # For open-loop voltage control (Not needed)      
+        self.velocity_request = controls.VelocityTorqueCurrentFOC(0)    # For closed-loop velocity control (CURRENT FOC)
+        self.torque_request = controls.TorqueCurrentFOC(0)              # For SysId routines (CURRENT FOC)
+        self.break_request = controls.VoltageOut(0)                     # For stopping the motor (Coast)    
 
         # Dashboard Setup
-        SmartDashboard.putNumber("Shooter/TargetVelocity", 0.0)
+        SmartDashboard.putNumber("Shooter/TargetVelocity", 0.0)         # Target velocity in units/sec
+                                                                        # So we can set it up from Dashboard
 
         # Configuration for motor
-        cfg = configs.TalonFXConfiguration()
+        cfg = configs.TalonFXConfiguration()                            # Create a new configuration object
         cfg.current_limits.stator_current_limit_enable = True           # Enable stator current limit
         cfg.current_limits.stator_current_limit = 60.0                  # Set stator current limit to 60A   
-        cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST  # Set neutral mode to Coast (NOT BRAKE!)
+        cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST  # Set neutral mode to Coast 
+        # NOT BRAKE or it will break!
 
         # 0.5 seconds to reach full torque (slower acceleration for shooter wheel)
         cfg.closed_loop_ramps.torque_closed_loop_ramp_period = 0.5
@@ -80,27 +82,27 @@ class Shooter(Subsystem):
         actual_vel = self.shooter_motor.get_velocity().value
         stator_amps = self.shooter_motor.get_stator_current().value
         
-        SmartDashboard.putNumber("Shooter/ActualVelocity", actual_vel)
-        SmartDashboard.putNumber("Shooter/StatorCurrent", stator_amps)
+        SmartDashboard.putNumber("Shooter/ActualVelocity", actual_vel) # Log actual velocity
+        SmartDashboard.putNumber("Shooter/StatorCurrent", stator_amps) # Log stator current
 
         # Jam Detection Logic
         # If amps > 58 for 2 seconds, jam_detected becomes True
         jam_detected = self.jam_debouncer.calculate(stator_amps > 58.0)
         
         if jam_detected:
-            self.is_jammed = True
+            self.is_jammed = True # Set jam state so we can read it later
             wpilib.reportError("SHOOTER JAM DETECTED - SHUTTING DOWN", False)
             
         SmartDashboard.putBoolean("Shooter/IsJammed", self.is_jammed)
 
     def run_shooter_pid(self):
         """Reads target from Dashboard and applies PID control"""
-        if self.is_jammed:
+        if self.is_jammed: # If jammed, do not run shooter
             self.stop_shooter()
             return
 
-        target = SmartDashboard.getNumber("Shooter/TargetVelocity", 0.0)
-        self.shooter_motor.set_control(self.velocity_request.with_velocity(target))
+        target = SmartDashboard.getNumber("Shooter/TargetVelocity", 0.0)            # Read target velocity
+        self.shooter_motor.set_control(self.velocity_request.with_velocity(target)) # Apply velocity control
 
     def stop_shooter(self):
         """Stops the motor and lets it coast"""
@@ -108,7 +110,7 @@ class Shooter(Subsystem):
 
     def reset_jam(self):
         """Call this to clear the jam state"""
-        self.is_jammed = False
+        self.is_jammed = False # Clear jam state
 
     # SysId Commands
     def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
