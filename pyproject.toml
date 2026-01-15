@@ -19,7 +19,6 @@ components = [
     # "navx",
     # "pathplannerlib",
     # "phoenix5",
-    "phoenix6",
     # "photonvision",
     # "playingwithfusion",
     # "rev",
@@ -30,5 +29,7 @@ components = [
 
 # Other pip packages to install
 requires = [
-    "phoenix6>=26.0.0b1"
+    "robotpy-pathplannerlib",
+    "phoenix6",
+    "sleipnirgroup-choreolib"
 ]
