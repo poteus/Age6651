@@ -108,8 +108,11 @@ class RobotContainer:
         self._joystick.a().whileTrue(self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kReverse))
 
 
-        self._joystick.rightTrigger().whileTrue(self.shooter.run_command(self.shooter.run_shooter_pid)
-                                            ).onFalse(self.shooter.run_command(self.shooter.stop_shooter))
+        self._joystick.rightBumper().whileTrue(
+                    self.shooter.run(self.shooter.run_shooter_pid)
+                                      ).onFalse(
+                    self.shooter.runOnce(self.shooter.stop_shooter)
+                )
 
     def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
