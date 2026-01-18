@@ -19,8 +19,7 @@ class Shooter(Subsystem):
         super().__init__()
 
         self.shooter_motor = hardware.TalonFX(50)      # Talon FX motor controller with CAN ID 50
-        self.shooter_motor.setInverted(False)          # Set motor inversion as needed
-
+    
         # Control requests
         # self.voltage_request = controls.VoltageOut(0)                 # For open-loop voltage control (Not needed)      
         self.velocity_request = controls.VelocityTorqueCurrentFOC(0)    # For closed-loop velocity control (CURRENT FOC)
@@ -33,6 +32,7 @@ class Shooter(Subsystem):
 
         # Configuration for motor
         cfg = configs.TalonFXConfiguration()                            # Create a new configuration object
+        cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE  # Set motor inversion
         cfg.current_limits.stator_current_limit_enable = True           # Enable stator current limit
         cfg.current_limits.stator_current_limit = 60.0                  # Set stator current limit to 60A   
         cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST  # Set neutral mode to Coast 
@@ -60,9 +60,7 @@ class Shooter(Subsystem):
                 stepVoltage=12.0,   # Constant Amps for Dynamic test (Note: SysId calls it 'stepVoltage' but it sends units)
                 timeout=10.0,       # Safety timeout
                 # Link SysId state to Phoenix 6 SignalLogger
-                recordState=lambda state: SignalLogger.write_string(
-                    "state", SysIdRoutineLog.state_enum_to_string(state)
-                )
+                recordState=lambda state: SignalLogger.write_string("state", state.name)
             ),
             SysIdRoutine.Mechanism(
                 # How to apply the amps
