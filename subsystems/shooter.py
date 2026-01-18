@@ -2,7 +2,8 @@ from commands2 import Command, Subsystem
 from commands2.sysid import SysIdRoutine
 import wpilib
 from wpilib import SmartDashboard, reportError
-from phoenix6 import hardware, controls, configs, SignalLogger, SysIdRoutineLog, signals
+from wpilib.sysid import SysIdRoutineLog
+from phoenix6 import hardware, controls, configs, SignalLogger, signals
 import phoenix6
 from wpimath.filter import Debouncer
 
@@ -73,7 +74,7 @@ class Shooter(Subsystem):
         )
 
         # Jam detection: Must be at current limit for 2.0 continuous seconds
-        self.jam_debouncer = Debouncer(2.0, Debouncer.Type.kRising)
+        self.jam_debouncer = Debouncer(2.0, Debouncer.DebounceType.kRising)
         self.is_jammed = False
     
     def periodic(self):
