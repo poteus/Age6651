@@ -59,7 +59,9 @@ class RobotContainer:
             .with_drive_request_type(
                 swerve.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE
             )  # Use open-loop control for drive motors
+            .with_steer_request_type(swerve.requests.SwerveModule.SteerRequestType.MOTION_MAGIC_EXPO)
         )
+        
         self._brake = swerve.requests.SwerveDriveBrake()
         self._point = swerve.requests.PointWheelsAt()
 
@@ -70,8 +72,8 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Path follower
-        self._auto_chooser = AutoBuilder.buildAutoChooser()
-        SmartDashboard.putData("Auto Chooser", self._auto_chooser)
+        # self._auto_chooser = AutoBuilder.buildAutoChooser()
+        # SmartDashboard.putData("Auto Chooser", self._auto_chooser)
         # SmartDashboard.putData("Auto1", self._auto_chooser)
         # for auto in AutoBuilder.getAllAutoNames():
         #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
@@ -131,6 +133,6 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return self._auto_chooser.getSelected()
-        #return commands2.cmd.print_("No autonomous command configured")
+        # return self._auto_chooser.getSelected()
+        return commands2.cmd.print_("No autonomous command configured")
     
