@@ -68,7 +68,7 @@ class TunerConstants:
 
     # The remote sensor feedback type to use for the steer motors;
     # When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
-    _steer_feedback_type = swerve.SteerFeedbackType.REMOTE_CANCODER
+    _steer_feedback_type = swerve.SteerFeedbackType.FUSED_CANCODER
 
     # The stator current at which the wheels start to slip;
     # This needs to be tuned to your individual robot
@@ -89,7 +89,7 @@ class TunerConstants:
 
     # CAN bus that the devices are located on;
     # All swerve devices must share the same CAN bus
-    canbus = CANBus("", "./logs/example.hoot")
+    canbus = CANBus("CANivore", "./logs/example.hoot")
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
