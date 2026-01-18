@@ -11,8 +11,9 @@ from commands2.button import CommandXboxController, Trigger
 from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-from pathplannerlib.auto import AutoBuilder
+# from pathplannerlib.auto import AutoBuilder
 from phoenix6 import swerve
+import wpilib
 from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
@@ -27,6 +28,20 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
+        # Detect which roborio is running to know if it is Murphy or Crimson
+        serial = wpilib.RobotController.getSerialNumber()
+        print(f"Robot Serial Number: {serial}")
+        if serial == "03415952":
+            print("This is Crimson.")
+            # Crimson has two cameras
+            #self.vision = Vision(["limelight-front", "limelight-back"])
+            from generated.Crimson_tuner_constants import TunerConstants 
+        else:
+            print("This is Murphy.")
+            # Murphy (or anything else) has one
+            #self.vision = Vision(["limelight-front"])
+            from generated.Murphy_tuner_constants import TunerConstants 
+
         self._max_speed = (
             TunerConstants.speed_at_12_volts
         )  # speed_at_12_volts desired top speed
