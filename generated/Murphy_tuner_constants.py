@@ -15,22 +15,22 @@ class TunerConstants:
     # output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     _steer_gains_volts = ( # VOLTS
         configs.Slot0Configs()
-        .with_k_p(0.2)
+        .with_k_p(0.05)
         .with_k_i(0)
-        .with_k_d(0.005)
-        .with_k_s(0.25) # 0.4917325)
+        .with_k_d(0.0)
+        .with_k_s(0.05) # 0.4917325)
         .with_k_v(2.08515)
         .with_k_a(0.09757475)
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     _steer_gains = (  # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(10) # This need to he high to keep wheel pointed
+        .with_k_p(5) # This need to he high to keep wheel pointed
         .with_k_i(0)
-        .with_k_d(4)  # Dampens the Kraken's high-speed torque
-        .with_k_s(5)  # Overcomes the pivot friction on carpet
-        .with_k_v(22.29)
-        .with_k_a(0.36)        
+        .with_k_d(0.1)  # Dampens the Kraken's high-speed torque
+        .with_k_s(1.5)  # Overcomes the pivot friction on carpet
+        .with_k_v(2.5)
+        .with_k_a(0.05)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
@@ -68,7 +68,7 @@ class TunerConstants:
 
     # The remote sensor feedback type to use for the steer motors;
     # When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
-    _steer_feedback_type = swerve.SteerFeedbackType.REMOTE_CANCODER
+    _steer_feedback_type = swerve.SteerFeedbackType.FUSED_CANCODER
 
     # The stator current at which the wheels start to slip;
     # This needs to be tuned to your individual robot
@@ -89,7 +89,7 @@ class TunerConstants:
 
     # CAN bus that the devices are located on;
     # All swerve devices must share the same CAN bus
-    canbus = CANBus("CANivore", "./logs/example.hoot")
+    canbus = CANBus("CANDrive", "./logs/example.hoot")
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot

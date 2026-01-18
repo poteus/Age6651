@@ -1,3 +1,4 @@
+
 #
 # Copyright (c) FIRST and other WPILib contributors.
 # Open Source Software; you can modify and/or share it under the terms of
@@ -6,15 +7,16 @@
 
 import commands2
 import commands2.cmd
+from commands2.sysid import SysIdRoutine
 from commands2.button import CommandXboxController, Trigger
 
-from generated.tuner_constants import TunerConstants
 from telemetry import Telemetry
 
-# from pathplannerlib.auto import AutoBuilder
-from phoenix6 import swerve
+from phoenix6 import swerve, SignalLogger
+##from subsystems.vision import Vision
+
 import wpilib
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
@@ -28,6 +30,7 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
+
         # Detect which roborio is running to know if it is Murphy or Crimson
         serial = wpilib.RobotController.getSerialNumber()
         print(f"Robot Serial Number: {serial}")
@@ -49,6 +52,7 @@ class RobotContainer:
             0.75
         )  # 3/4 of a rotation per second max angular velocity
 
+        print("With MOTION MAGIC.")
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
             swerve.requests.FieldCentric()
@@ -57,11 +61,10 @@ class RobotContainer:
                 self._max_angular_rate * 0.1
             )  # Add a 10% deadband
             .with_drive_request_type(
-                swerve.SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE
+                swerve.SwerveModule.DriveRequestType.VELOCITY
             )  # Use open-loop control for drive motors
             .with_steer_request_type(swerve.requests.SwerveModule.SteerRequestType.MOTION_MAGIC_EXPO)
         )
-        
         self._brake = swerve.requests.SwerveDriveBrake()
         self._point = swerve.requests.PointWheelsAt()
 
@@ -70,14 +73,6 @@ class RobotContainer:
         self._joystick = CommandXboxController(0)
 
         self.drivetrain = TunerConstants.create_drivetrain()
-
-        # Path follower
-        # self._auto_chooser = AutoBuilder.buildAutoChooser()
-        # SmartDashboard.putData("Auto Chooser", self._auto_chooser)
-        # SmartDashboard.putData("Auto1", self._auto_chooser)
-        # for auto in AutoBuilder.getAllAutoNames():
-        #     clean = auto.strip()          # 🔑 THIS FIXES Icon\r
-        #     self._auto_chooser.addOption(clean, AutoBuilder.buildAuto(clean))
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -88,7 +83,7 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-        
+
         # Note that X is defined as forward according to WPILib convention,
         # and Y is defined as to the left according to WPILib convention.
         self.drivetrain.setDefaultCommand(
@@ -124,15 +119,10 @@ class RobotContainer:
             )
         )
 
-        self.drivetrain.register_telemetry(
-            lambda state: self._logger.telemeterize(state)
-        )
-
+        
     def getAutonomousCommand(self) -> commands2.Command:
         """Use this to pass the autonomous command to the main {@link Robot} class.
 
         :returns: the command to run in autonomous
         """
-        # return self._auto_chooser.getSelected()
         return commands2.cmd.print_("No autonomous command configured")
-    

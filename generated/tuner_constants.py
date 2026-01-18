@@ -37,10 +37,10 @@ class TunerConstants:
 
     # The closed-loop output type to use for the steer motors;
     # This affects the PID/FF gains for the steer motors
-    _steer_closed_loop_output = swerve.ClosedLoopOutputType.VOLTAGE
+    _steer_closed_loop_output = swerve.ClosedLoopOutputType.TORQUE_CURRENT_FOC
     # The closed-loop output type to use for the drive motors;
     # This affects the PID/FF gains for the drive motors
-    _drive_closed_loop_output = swerve.ClosedLoopOutputType.VOLTAGE
+    _drive_closed_loop_output = swerve.ClosedLoopOutputType.TORQUE_CURRENT_FOC
 
     # The type of motor used for the drive motor
     _drive_motor_type = swerve.DriveMotorArrangement.TALON_FX_INTEGRATED
