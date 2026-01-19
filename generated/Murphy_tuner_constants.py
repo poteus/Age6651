@@ -25,9 +25,9 @@ class TunerConstants:
     )
     _steer_gains = (  # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(5) # This need to he high to keep wheel pointed
+        .with_k_p(80) # This need to he high to keep wheel pointed
         .with_k_i(0)
-        .with_k_d(0.1)  # Dampens the Kraken's high-speed torque
+        .with_k_d(4)  # Dampens the Kraken's high-speed torque
         .with_k_s(1.5)  # Overcomes the pivot friction on carpet
         .with_k_v(2.5)
         .with_k_a(0.05)        
@@ -93,7 +93,8 @@ class TunerConstants:
 
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
-    speed_at_12_volts: units.meters_per_second = 4.73
+    # speed_at_12_volts: units.meters_per_second = 4.73
+    speed_at_12_volts: units.meters_per_second = 1.5
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
     # This may need to be tuned to your individual robot
