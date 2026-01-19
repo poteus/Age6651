@@ -44,11 +44,12 @@ class Shooter(Subsystem):
         # PID Gains (Tune these for the Kraken X60)
         # These are starting values; you may need to adjust kP
         slot0 = cfg.slot0
-        slot0.k_s = 2.0  # Amps to overcome friction
-        slot0.k_v = 1.5  # Amps per unit of velocity
-        slot0.k_p = 3.0  # Amps per unit of error
+        slot0.k_s = 1.5632  # Amps to overcome friction
+        slot0.k_v = .5 # 0.2525  # Amps per unit of velocity
+        slot0.k_a = 0.05
+        slot0.k_p = 20 # Amps per unit of error
         slot0.k_i = 0.0
-        slot0.k_d = 0.0
+        slot0.k_d = 0.1
 
         # Apply configuration
         self.shooter_motor.configurator.apply(cfg)
@@ -56,11 +57,11 @@ class Shooter(Subsystem):
         # SysId Routine Setup
         self.sys_id_routine = SysIdRoutine(
             SysIdRoutine.Config(
-                rampRate=1.5,       # Amps increase per second (Quasistatic)
-                stepVoltage=12.0,   # Constant Amps for Dynamic test (Note: SysId calls it 'stepVoltage' but it sends units)
+                rampRate=6.0,       # Amps increase per second (Quasistatic)
+                stepVoltage=40.0,   # Constant Amps for Dynamic test (Note: SysId calls it 'stepVoltage' but it sends units)
                 timeout=10.0,       # Safety timeout
                 # Link SysId state to Phoenix 6 SignalLogger
-                recordState=lambda state: SignalLogger.write_string("state", state.name)
+                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
             ),
             SysIdRoutine.Mechanism(
                 # How to apply the amps
