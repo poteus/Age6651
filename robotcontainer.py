@@ -88,24 +88,24 @@ class RobotContainer:
         """
         # --- LOGGER CONTROL ---
         # Press "Start" button to begin logging
-        self._joystick.start().onTrue(
-            commands2.cmd.runOnce(lambda: SignalLogger.start())
-        )
-        # We'll use the Back button for both stopping the logger AND resetting jams
-        self._joystick.back().onTrue(
-            commands2.cmd.runOnce(lambda: SignalLogger.stop())
-        ).onTrue(
-            commands2.cmd.runOnce(lambda: self.shooter.reset_jam())
-        )
+        # self._joystick.start().onTrue(
+        #     commands2.cmd.runOnce(lambda: SignalLogger.start())
+        # )
+        # # We'll use the Back button for both stopping the logger AND resetting jams
+        # self._joystick.back().onTrue(
+        #     commands2.cmd.runOnce(lambda: SignalLogger.stop())
+        # ).onTrue(
+        #     commands2.cmd.runOnce(lambda: self.shooter.reset_jam())
+        # )
 
         # --- Characterization Bindings ---
         # Quasistatic: Motor ramps up speed slowly
-        self._joystick.y().whileTrue(self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kForward))
-        self._joystick.x().whileTrue(self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kReverse))
+        # self._joystick.y().whileTrue(self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kForward))
+        # self._joystick.x().whileTrue(self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kReverse))
         
-        # Dynamic: Motor gets a sudden 7V "step"
-        self._joystick.b().whileTrue(self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kForward))
-        self._joystick.a().whileTrue(self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kReverse))
+        # # Dynamic: Motor gets a sudden 7V "step"
+        # self._joystick.b().whileTrue(self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kForward))
+        # self._joystick.a().whileTrue(self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kReverse))
 
 
         self._joystick.rightBumper().whileTrue(

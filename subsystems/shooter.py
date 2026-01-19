@@ -44,7 +44,7 @@ class Shooter(Subsystem):
         # PID Gains (Tune these for the Kraken X60)
         # These are starting values; you may need to adjust kP
         slot0 = cfg.slot0
-        slot0.k_s = 1.5632  # Amps to overcome friction
+        slot0.k_s = 5 #1.5632  # Amps to overcome friction
         slot0.k_v = .5 # 0.2525  # Amps per unit of velocity
         slot0.k_a = 0.05
         slot0.k_p = 20 # Amps per unit of error
@@ -55,26 +55,26 @@ class Shooter(Subsystem):
         self.shooter_motor.configurator.apply(cfg)
 
         # SysId Routine Setup
-        self.sys_id_routine = SysIdRoutine(
-            SysIdRoutine.Config(
-                rampRate=6.0,       # Amps increase per second (Quasistatic)
-                stepVoltage=40.0,   # Constant Amps for Dynamic test (Note: SysId calls it 'stepVoltage' but it sends units)
-                timeout=10.0,       # Safety timeout
-                # Link SysId state to Phoenix 6 SignalLogger
-                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
-            ),
-            SysIdRoutine.Mechanism(
-                # How to apply the amps
-                lambda amps: self.shooter_motor.set_control(self.torque_request.with_output(amps)),
-                # How to log (SignalLogger handles the heavy lifting, so we return None here)
-                lambda log: None, 
-                self
-            )
-        )
+        # self.sys_id_routine = SysIdRoutine(
+        #     SysIdRoutine.Config(
+        #         rampRate=6.0,       # Amps increase per second (Quasistatic)
+        #         stepVoltage=40.0,   # Constant Amps for Dynamic test (Note: SysId calls it 'stepVoltage' but it sends units)
+        #         timeout=10.0,       # Safety timeout
+        #         # Link SysId state to Phoenix 6 SignalLogger
+        #         recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
+        #     ),
+        #     SysIdRoutine.Mechanism(
+        #         # How to apply the amps
+        #         lambda amps: self.shooter_motor.set_control(self.torque_request.with_output(amps)),
+        #         # How to log (SignalLogger handles the heavy lifting, so we return None here)
+        #         lambda log: None, 
+        #         self
+        #     )
+        # )
 
         # Jam detection: Must be at current limit for 2.0 continuous seconds
-        self.jam_debouncer = Debouncer(2.0, Debouncer.DebounceType.kRising)
-        self.is_jammed = False
+        # self.jam_debouncer = Debouncer(2.0, Debouncer.DebounceType.kRising)
+        # self.is_jammed = False
     
     def periodic(self):
         """Standard Subsystem method that runs every 20ms"""
@@ -87,19 +87,19 @@ class Shooter(Subsystem):
 
         # Jam Detection Logic
         # If amps > 58 for 2 seconds, jam_detected becomes True
-        jam_detected = self.jam_debouncer.calculate(stator_amps > 58.0)
+        # jam_detected = self.jam_debouncer.calculate(stator_amps > 58.0)
         
-        if jam_detected:
-            self.is_jammed = True # Set jam state so we can read it later
-            wpilib.reportError("SHOOTER JAM DETECTED - SHUTTING DOWN", False)
+        # if jam_detected:
+        #     self.is_jammed = True # Set jam state so we can read it later
+        #     wpilib.reportError("SHOOTER JAM DETECTED - SHUTTING DOWN", False)
             
-        SmartDashboard.putBoolean("Shooter/IsJammed", self.is_jammed)
+        # SmartDashboard.putBoolean("Shooter/IsJammed", self.is_jammed)
 
     def run_shooter_pid(self):
         """Reads target from Dashboard and applies PID control"""
-        if self.is_jammed: # If jammed, do not run shooter
-            self.stop_shooter()
-            return
+        # if self.is_jammed: # If jammed, do not run shooter
+        #     self.stop_shooter()
+        #     return
 
         target = SmartDashboard.getNumber("Shooter/TargetVelocity", 0.0)            # Read target velocity
         self.shooter_motor.set_control(self.velocity_request.with_velocity(target)) # Apply velocity control
@@ -108,13 +108,13 @@ class Shooter(Subsystem):
         """Stops the motor and lets it coast"""
         self.shooter_motor.set_control(self.break_request.with_output(0))
 
-    def reset_jam(self):
-        """Call this to clear the jam state"""
-        self.is_jammed = False # Clear jam state
+    # def reset_jam(self):
+    #     """Call this to clear the jam state"""
+    #     self.is_jammed = False # Clear jam state
 
-    # SysId Commands
-    def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
-        return self.sys_id_routine.quasistatic(direction)
+    # # SysId Commands
+    # def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
+    #     return self.sys_id_routine.quasistatic(direction)
 
-    def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
-        return self.sys_id_routine.dynamic(direction)
+    # def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
+    #     return self.sys_id_routine.dynamic(direction)
