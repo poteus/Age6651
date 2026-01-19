@@ -15,6 +15,8 @@ from telemetry import Telemetry
 from phoenix6 import swerve, SignalLogger
 ##from subsystems.vision import Vision
 
+from pathplannerlib.auto import AutoBuilder
+
 import wpilib
 from wpilib import DriverStation
 from wpimath.geometry import Rotation2d
@@ -72,6 +74,10 @@ class RobotContainer:
 
         self.drivetrain = TunerConstants.create_drivetrain()
 
+        # Build the auto chooser and put it on the dashboard
+        self.auto_chooser = AutoBuilder.buildAutoChooser()
+        wpilib.SmartDashboard.putData("Auto Chooser", self.auto_chooser)
+
         # Configure the button bindings
         self.configureButtonBindings()
 
@@ -123,4 +129,5 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return commands2.cmd.print_("No autonomous command configured")
+        # return commands2.cmd.print_("No autonomous command configured")
+        return self.auto_chooser.getSelected()
