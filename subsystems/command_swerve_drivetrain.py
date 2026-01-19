@@ -5,11 +5,14 @@ from commands2 import Command, Subsystem
 
 import commands2
 from pathplannerlib.auto import AutoBuilder, RobotConfig, NamedCommands
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
+from pathplannerlib.controller import PPHolonomicDriveController
+from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
 from phoenix6 import swerve, units, utils
+
 from typing import Callable, overload
 from wpilib import DriverStation
 from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.system.plant import DCMotor
 from wpimath.kinematics import ChassisSpeeds
 
 
@@ -168,6 +171,25 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             return
         
         config = RobotConfig.fromGUISettings()
+        # # Manually define the robot configuration to avoid the GUISettings file-read lag
+        # # Adjust massKG and MOI based on Murphy's actual weight
+        # config = RobotConfig(
+        #     massKG=45.0, 
+        #     MOI=6.8, 
+        #     moduleConfig=RobotConfig.ModuleConfig(
+        #         wheelRadiusMeters=self.front_left.WheelRadius,
+        #         maxDriveVelocityMetersPerSecond=4.73,
+        #         driveMotor=DCMotor.krakenX60(1), # Assuming Kraken X60s
+        #         driveGearRatio=6.746,
+        #         wheelFrictionForceNewtons=550.0
+        #     ),
+        #     moduleLocations=[
+        #         self.front_left.Location,
+        #         self.front_right.Location,
+        #         self.back_left.Location,
+        #         self.back_right.Location
+        #     ]
+        # )
         AutoBuilder.configure(
             lambda: self.get_state().pose,   # Supplier of current robot pose
             self.reset_pose,                 # Consumer for seeding pose against auto
