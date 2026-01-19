@@ -57,9 +57,7 @@ class RobotContainer:
         self._drive = (
             swerve.requests.FieldCentric()
             .with_deadband(self._max_speed * 0.1)
-            .with_rotational_deadband(
-                self._max_angular_rate * 0.1
-            )  # Add a 10% deadband
+            .with_rotational_deadband(self._max_angular_rate * 0.1)
             .with_drive_request_type(
                 swerve.SwerveModule.DriveRequestType.VELOCITY
             )  # Use open-loop control for drive motors
