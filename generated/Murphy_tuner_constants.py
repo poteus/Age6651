@@ -25,12 +25,12 @@ class TunerConstants:
     )
     _steer_gains = (  # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(80) # This need to he high to keep wheel pointed
+        .with_k_p(15) # This need to he high to keep wheel pointed
         .with_k_i(0)
-        .with_k_d(4)  # Dampens the Kraken's high-speed torque
-        .with_k_s(1.5)  # Overcomes the pivot friction on carpet
-        .with_k_v(2.5)
-        .with_k_a(0.05)        
+        .with_k_d(0.5)  # Dampens the Kraken's high-speed torque
+        .with_k_s(2.5)  # Overcomes the pivot friction on carpet
+        .with_k_v(2.05)
+        .with_k_a(0.1)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
