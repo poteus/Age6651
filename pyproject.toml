@@ -22,7 +22,7 @@ components = [
     # "playingwithfusion",
     # "rev",
     # "romi",
-    # "sim",
+    "sim",
     # "xrp",
 ]
 
