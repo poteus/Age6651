@@ -10,7 +10,8 @@ from pathplannerlib.config import RobotConfig, PIDConstants, ModuleConfig
 from phoenix6 import swerve, units, utils
 
 from typing import Callable, overload
-from wpilib import DriverStation
+import wpilib
+from wpilib import DriverStation, Notifier, DriverStation, Timer
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.system.plant import DCMotor
 from wpimath.kinematics import ChassisSpeeds
@@ -26,6 +27,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
     """Blue alliance sees forward as 0 degrees (toward red alliance wall)"""
     _RED_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.fromDegrees(180)
     """Red alliance sees forward as 180 degrees (toward blue alliance wall)"""
+    _SIM_LOOP_PERIOD: units.second = 0.004 # 4 ms loop for simulation
 
     @overload
     def __init__(
@@ -159,7 +161,17 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         
         self._configure_auto_builder()
 
+        # Simulation-related variables
+        self._sim_notifier: Notifier | None = None
+        self._last_sim_time: units.second = 0.0
 
+        if wpilib.RobotBase.isSimulation() and not wpilib.RobotBase.isReal():
+            # Only start the notifier if we aren't running inside pytest
+            import sys
+            if "pytest" not in sys.modules:
+                self._last_sim_time = utils.get_fpgatime()
+                self._sim_notifier = Notifier(self.simulationPeriodic)
+                self._sim_notifier.startPeriodic(self._SIM_LOOP_PERIOD)
 
     def _configure_auto_builder(self):
         ''' Configures the AutoBuilder for path following with this drivetrain.'''
@@ -242,6 +254,24 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                     else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
                 )
                 self._has_applied_operator_perspective = True
+
+
+    def simulationPeriodic(self):
+        """
+        Updates the simulation state of the swerve drivetrain.
+        This is called periodically during simulation.
+        """
+        # Assume a standard 20ms (0.02s) update rate for the simulation.
+        # RobotController.getBatteryVoltage() provides the simulated battery voltage.
+        current_time = utils.get_current_time_seconds()
+        delta_time = current_time - self._last_sim_time
+        self._last_sim_time = current_time
+        
+        # Ensure delta_time is sane (prevents massive jumps on first loop)
+        if delta_time <= 0 or delta_time > 0.1:
+            delta_time = 0.02
+
+        self.update_sim_state(delta_time, wpilib.RobotController.getBatteryVoltage())
 
     def add_vision_measurement(self, vision_robot_pose: Pose2d, timestamp: units.second, vision_measurement_std_devs: tuple[float, float, float] | None = None):
         """
