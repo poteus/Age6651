@@ -9,3 +9,9 @@ ctre_sim/
 venv/
 __pycache__/
 .pytest_cache/
+
+# System-specific junk
+Icon*
+.DS_Store
+Desktop.ini
+thumbs.db
