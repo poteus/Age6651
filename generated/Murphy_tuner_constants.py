@@ -25,12 +25,12 @@ class TunerConstants:
     )
     _steer_gains = (  # TORQUE_CURRENT_FOC
         configs.Slot0Configs()
-        .with_k_p(15) # This need to he high to keep wheel pointed
+        .with_k_p(50) # This need to he high to keep wheel pointed
         .with_k_i(0)
-        .with_k_d(0.5)  # Dampens the Kraken's high-speed torque
-        .with_k_s(2.5)  # Overcomes the pivot friction on carpet
+        .with_k_d(2.5)  # Dampens the Kraken's high-speed torque
+        .with_k_s(0.4)  # Overcomes the pivot friction on carpet
         .with_k_v(2.05)
-        .with_k_a(0.1)        
+        .with_k_a(0.05)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)
     )
     # When using closed-loop control, the drive motor uses the control
@@ -49,7 +49,7 @@ class TunerConstants:
         .with_k_p(5.06) # Current starts around 5-10 amps
         .with_k_i(0)
         .with_k_d(0.15) # A tiny bit of D helps FOC stability
-        .with_k_s(3.26) # It takes ~2-4 amps just to break friction
+        .with_k_s(1.0) # 3.26) # It takes ~2-4 amps just to break friction
         .with_k_v(2.19) # Ballpark Amps per rotation/sec
         .with_k_a(0.04) # Acceleration constant
     )
@@ -99,7 +99,7 @@ class TunerConstants:
     # Theoretical free speed (m/s) at 12 V applied output;
     # This needs to be tuned to your individual robot
     # speed_at_12_volts: units.meters_per_second = 4.73
-    speed_at_12_volts: units.meters_per_second = 1.5
+    speed_at_12_volts: units.meters_per_second = 4.0
 
     # Every 1 rotation of the azimuth results in _couple_ratio drive motor turns;
     # This may need to be tuned to your individual robot
