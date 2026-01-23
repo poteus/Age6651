@@ -233,21 +233,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         # This allows us to correct the perspective in case the robot code restarts mid-match.
         # Otherwise, only check and apply the operator perspective if the DS is disabled.
         # This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-        super().periodic() # Call the parent periodic method to ensure odometry updates
-
-        # Telemetry for the Front Left steer motor as an example
-        # self.modules[0] is Front Left
-        fl_module = self.modules[0]
+        super().periodic() # Call the parent periodic method to ensure odometry update
         
-        # Get the target position from the last request and actual position
-        target_rotations = fl_module.get_steer_motor().get_closed_loop_reference().value
-        actual_rotations = fl_module.get_steer_motor().get_position().value
-        
-        # Output to Dashboard for live tuning
-        SmartDashboard.putNumber("Swerve/FL_Steer_Target", target_rotations)
-        SmartDashboard.putNumber("Swerve/FL_Steer_Actual", actual_rotations)
-        SmartDashboard.putNumber("Swerve/FL_Steer_Error", target_rotations - actual_rotations)
-
         if not self._has_applied_operator_perspective or DriverStation.isDisabled():
             alliance_color = DriverStation.getAlliance()
             if alliance_color is not None:
