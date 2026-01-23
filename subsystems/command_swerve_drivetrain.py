@@ -3,6 +3,7 @@
 
 from commands2 import Command, Subsystem
 
+import math
 import commands2
 from pathplannerlib.auto import AutoBuilder, RobotConfig, NamedCommands
 from pathplannerlib.controller import PPHolonomicDriveController
@@ -13,8 +14,7 @@ from typing import Callable, overload
 from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.system.plant import DCMotor
-from wpimath.kinematics import ChassisSpeeds
-
+from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
 
 class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
     """
@@ -203,7 +203,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             ),
             PPHolonomicDriveController(
                 # PID constants for translation
-                PIDConstants(4.0, 0.0, 0.0),
+                PIDConstants(5.0, 0.0, 0.0),
                 # PID constants for rotation
                 PIDConstants(2.5, 0.0, 0.0)
             ),
@@ -244,6 +244,13 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                     else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
                 )
                 self._has_applied_operator_perspective = True
+        
+        state1 = self.modules[0].get_current_state().angle.degrees()%180
+        target1 = self.modules[0].get_target_state().angle.degrees()
+
+
+        SmartDashboard.putNumber("Desired Angle", target1)
+        SmartDashboard.putNumber("State Angle", state1)
 
     def add_vision_measurement(self, vision_robot_pose: Pose2d, timestamp: units.second, vision_measurement_std_devs: tuple[float, float, float] | None = None):
         """
