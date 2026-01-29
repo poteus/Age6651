@@ -13,14 +13,16 @@ from commands2.button import CommandXboxController, Trigger
 from telemetry import Telemetry
 
 from phoenix6 import swerve, SignalLogger
-##from subsystems.vision import Vision
+from subsystems.vision import Vision
 
 from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.path import PathConstraints
 
 import wpilib
 from wpilib import DriverStation
-from wpimath.geometry import Rotation2d
+from wpimath.geometry import Rotation2d, Pose2d
 from wpimath.units import rotationsToRadians
+from wpimath import units
 
 
 class RobotContainer:
@@ -44,7 +46,7 @@ class RobotContainer:
         else:
             print("This is Murphy.")
             # Murphy (or anything else) has one
-            #self.vision = Vision(["limelight-front"])
+            self.vision = Vision(["limelight-front"])
             from generated.Murphy_tuner_constants import TunerConstants 
 
         self._max_speed = (
@@ -77,6 +79,13 @@ class RobotContainer:
         # Build the auto chooser and put it on the dashboard
         self.auto_chooser = AutoBuilder.buildAutoChooser()
         wpilib.SmartDashboard.putData("Auto Chooser", self.auto_chooser)
+
+        self.target_pose = Pose2d(2.5, 4.0, Rotation2d.fromDegrees(0))
+
+        self.constraints = PathConstraints(
+            3.0, 3.0,
+            units.rotationsToRadians(2), units.rotationsToRadians(1)
+        )
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -122,6 +131,19 @@ class RobotContainer:
                 )
             )
         )
+
+       
+
+        self._joystick.leftBumper().whileTrue(
+            AutoBuilder.pathfindToPose(
+                self.target_pose,
+                self.constraints,
+                goal_end_vel=0.0
+            )
+        )
+
+
+
 
         
     def getAutonomousCommand(self) -> commands2.Command:

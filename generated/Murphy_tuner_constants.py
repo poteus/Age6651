@@ -28,7 +28,7 @@ class TunerConstants:
         .with_k_p(80) # This need to he high to keep wheel pointed
         .with_k_i(0)
         .with_k_d(2.5)  # Dampens the Kraken's high-speed torque
-        .with_k_s(1.5)  # Overcomes the pivot friction on carpet
+        .with_k_s(2)  # Overcomes the pivot friction on carpet
         .with_k_v(2.05)
         .with_k_a(0.05)        
         .with_static_feedforward_sign(signals.StaticFeedforwardSignValue.USE_CLOSED_LOOP_SIGN)

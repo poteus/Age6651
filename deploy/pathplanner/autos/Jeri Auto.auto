@@ -7,43 +7,43 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Dumb1"
+            "pathName": "Jeri1"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 2.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Dumb2"
+            "pathName": "Jeri2"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 2.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Dumb3"
+            "pathName": "Jeri3"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 2.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Dumb4"
+            "pathName": "Jeri4"
           }
         }
       ]
