@@ -144,6 +144,16 @@ class RobotContainer:
 
     # Updates the pose from Vision subsystem
     def update_vision_odometry(self):
+        #This sends the data of the pigeon to the limelight
+        #Gets the latest data of the pigeon
+        imu = self.drivetrain.pigeon2
+        yaw = imu.get_yaw().value
+        pitch = imu.get_pitch().value
+        roll = imu.get_roll().value
+        yaw_rate = imu.get_angular_velocity_z_world().value
+        #Pushes it to the limelight
+        self.vision.patch_limelight_orientation([yaw, yaw_rate, pitch, 0, roll, 0])
+        print("yaw =", yaw)
         # Reads all available vision updates
         vision_updates = self.vision.get_estimated_global_pose()
         std_devs = (0.7, 0.7, 999999.0)  # Standard deviations for x, y, and theta

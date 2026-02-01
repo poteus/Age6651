@@ -8,6 +8,7 @@ class Vision:
         self.inst = ntcore.NetworkTableInstance.getDefault()
         self.subscribers = {}
         
+        self.limelight_names = limelight_names
         # Dictionary to hold the tables for each camera
         for name in limelight_names:
             table = self.inst.getTable(name)
@@ -35,3 +36,12 @@ class Vision:
                 all_vision_updates.append((pose, timestamp))
         
         return all_vision_updates
+    
+    def patch_limelight_orientation(self,pigeon_stats):
+        """
+        
+        """
+        for name in self.limelight_names:
+            table = self.inst.getTable(name)
+
+            table.getFloatArrayTopic("robot_orientation_set").publish().set(pigeon_stats) 
