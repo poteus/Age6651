@@ -9,12 +9,17 @@ class Vision:
         self.subscribers = {}
         
         self.limelight_names = limelight_names
+        self.orientation_publishers = {}
+
         # Dictionary to hold the tables for each camera
         for name in limelight_names:
             table = self.inst.getTable(name)
             # We create a subscriber for the "botpose_wpiblue" topic
             # We use FloatArray because that is how Limelight sends botpose
             self.subscribers[name] = table.getFloatArrayTopic("botpose_wpiblue").subscribe([])
+            self.orientation_publishers[name] = table.getFloatArrayTopic("robot_orientaton_set").publish()
+
+            table.getIntegerTopic("imumode_set").publish().set(4)
 
     def get_estimated_global_pose(self):
         """
@@ -42,6 +47,5 @@ class Vision:
         
         """
         for name in self.limelight_names:
-            table = self.inst.getTable(name)
-
-            table.getFloatArrayTopic("robot_orientation_set").publish().set(pigeon_stats) 
+            if name in self.orientation_publishers:
+                self.orientation_publishers[name].set(pigeon_stats)
