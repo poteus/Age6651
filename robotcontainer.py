@@ -142,8 +142,17 @@ class RobotContainer:
             )
         )
 
-
-
+    # Updates the pose from Vision subsystem
+    def update_vision_odometry(self):
+        # Reads all available vision updates
+        vision_updates = self.vision.get_estimated_global_pose()
+        std_devs = (0.7, 0.7, 999999.0)  # Standard deviations for x, y, and theta
+        
+        # For each vision update, we pass it to the drivetrain for fusion
+        for pose, timestamp in vision_updates:
+            # We pass the vision pose and timestamp to the drivetrain
+            # This is where the Kalman Filter fusion happens
+            self.drivetrain.add_vision_measurement(pose, timestamp, std_devs)
 
         
     def getAutonomousCommand(self) -> commands2.Command:
