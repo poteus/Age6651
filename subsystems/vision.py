@@ -5,11 +5,15 @@ import ntcore # NetworkTables to talk to Limelights
 
 class Vision:
     def __init__(self, limelight_names):
-        self.limelight_names = limelight_names
         self.inst = ntcore.NetworkTableInstance.getDefault()
+        self.subscribers = {}
         
         # Dictionary to hold the tables for each camera
-        self.tables = {name: self.inst.getTable(name) for name in limelight_names}
+        for name in limelight_names:
+            table = self.inst.getTable(name)
+            # We create a subscriber for the "botpose_wpiblue" topic
+            # We use FloatArray because that is how Limelight sends botpose
+            self.subscribers[name] = table.getFloatArrayTopic("botpose_wpiblue").subscribe([])
 
     def get_estimated_global_pose(self):
         """
@@ -18,13 +22,14 @@ class Vision:
         """
         all_vision_updates = []
         
-        for name, table in self.tables.items():
+        for name, sub in self.subscribers.items():
             # botpose_wpiblue is the standard for 2026 
             # (X, Y, Z, Roll, Pitch, Yaw, Latency, TagCount, TagSpan, AvgDist, AvgArea)
-            botpose = table.getEntry("botpose_wpiblue").getDoubleArray([0]*11)
+            botpose = sub.get()
             
             # Only use the data if the Limelight actually sees a tag
-            if botpose[7] > 0: 
+            if len(botpose) > 7 and botpose[7] > 0: 
+                # Calculate the timestamp of the measurement
                 timestamp = wpilib.Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
                 pose = Pose2d(botpose[0], botpose[1], Rotation2d.fromDegrees(botpose[5]))
                 all_vision_updates.append((pose, timestamp))
