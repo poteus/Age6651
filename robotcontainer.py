@@ -157,4 +157,5 @@ class RobotContainer:
         :returns: the command to run in autonomous
         """
         # return commands2.cmd.print_("No autonomous command configured")
-        return self.auto_chooser.getSelected()
+        #return self.auto_chooser.getSelected()
+        return commands2.cmd.none()
