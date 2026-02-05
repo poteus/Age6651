@@ -93,55 +93,39 @@ class RobotContainer:
         self.configureButtonBindings()
 
     def configureButtonBindings(self) -> None:
-        """
-        Use this method to define your button->command mappings. Buttons can be created by
-        instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
-        and then passing it to a JoystickButton.
-        """
-
-        # Note that X is defined as forward according to WPILib convention,
-        # and Y is defined as to the left according to WPILib convention.
+        # --- DRIVE LOCKDOWN ---
+        # Instead of joystick control, we force the drivetrain to stay in Brake mode.
+        # This prevents any accidental movement from the joysticks.
         self.drivetrain.setDefaultCommand(
-            # Drivetrain will execute this command periodically
-            self.drivetrain.apply_request(
-                lambda: (
-                    self._drive.with_velocity_x(
-                        -self._joystick.getLeftY() * self._max_speed
-                    )  # Drive forward with negative Y (forward)
-                    .with_velocity_y(
-                        -self._joystick.getLeftX() * self._max_speed
-                    )  # Drive left with negative X (left)
-                    .with_rotational_rate(
-                        -self._joystick.getRightX() * self._max_angular_rate
-                    )  # Drive counterclockwise with negative X (left)
-                )
-            )
+            self.drivetrain.apply_request(lambda: swerve.requests.SwerveDriveBrake())
         )
 
-        # Idle while the robot is disabled. This ensures the configured
-        # neutral mode is applied to the drive motors while disabled.
-        idle = swerve.requests.Idle()
-        Trigger(DriverStation.isDisabled).whileTrue(
-            self.drivetrain.apply_request(lambda: idle).ignoringDisable(True)
+        # --- Indexer Characterization (SysId) ---
+        # Keep these active for your testing
+        self._joystick.start().and_(self._joystick.y()).whileTrue(
+            self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
+        )
+        self._joystick.start().and_(self._joystick.x()).whileTrue(
+            self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
+        )
+        self._joystick.start().and_(self._joystick.b()).whileTrue(
+            self.indexer.sysIdDynamic(SysIdRoutine.Direction.kForward)
+        )
+        self._joystick.start().and_(self._joystick.a()).whileTrue(
+            self.indexer.sysIdDynamic(SysIdRoutine.Direction.kReverse)
         )
 
-        self._joystick.a().whileTrue(self.drivetrain.apply_request(lambda: self._brake))
-        self._joystick.b().whileTrue(
-            self.drivetrain.apply_request(
-                lambda: self._point.with_module_direction(
-                    Rotation2d(-self._joystick.getLeftY(), -self._joystick.getLeftX())
-                )
-            )
-        )
+        # --- Logging Control ---
+        self._joystick.leftStick().onTrue(commands2.cmd.runOnce(SignalLogger.start))
+        self._joystick.rightStick().onTrue(commands2.cmd.runOnce(SignalLogger.stop))
 
-       
-
-        self._joystick.leftBumper().whileTrue(
-            AutoBuilder.pathfindToPose(
-                self.target_pose,
-                self.constraints,
-                goal_end_vel=0.0
-            )
+       # --- GLOBAL KILL SWITCH ---
+        # Pressing the 'Back' (View) button will cancel ALL running commands.
+        # This will immediately stop the Indexer and Drivetrain.
+        self._joystick.back().onTrue(
+            commands2.cmd.runOnce(
+                lambda: commands2.CommandScheduler.getInstance().cancelAll()
+            ).ignoringDisable(True)
         )
 
     # Updates the pose from Vision subsystem
