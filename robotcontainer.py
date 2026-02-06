@@ -15,6 +15,8 @@ from telemetry import Telemetry
 from phoenix6 import swerve, SignalLogger
 from subsystems.vision import Vision
 from subsystems.indexer import Indexer
+from subsystems.shooter import Shooter
+from subsystems.turret import Turret
 
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.path import PathConstraints
@@ -76,6 +78,8 @@ class RobotContainer:
         self._joystick = CommandXboxController(0)
 
         self.indexer = Indexer()
+        self.shooter = Shooter()
+        self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Build the auto chooser and put it on the dashboard
