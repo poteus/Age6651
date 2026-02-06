@@ -17,9 +17,9 @@ class Vision:
             # We create a subscriber for the "botpose_wpiblue" topic
             # We use FloatArray because that is how Limelight sends botpose
             self.subscribers[name] = table.getFloatArrayTopic("botpose_wpiblue").subscribe([])
-            self.orientation_publishers[name] = table.getFloatArrayTopic("robot_orientaton_set").publish()
+            self.orientation_publishers[name] = table.getFloatArrayTopic("robot_orientation_set").publish()
 
-            table.getIntegerTopic("imumode_set").publish().set(4)
+            table.getIntegerTopic("imumode_set").publish().set(1)
 
     def get_estimated_global_pose(self):
         """
@@ -34,7 +34,7 @@ class Vision:
             botpose = sub.get()
             
             # Only use the data if the Limelight actually sees a tag
-            if len(botpose) > 7 and botpose[7] > 0: 
+            if len(botpose) >= 8 and botpose[7] > 0: 
                 # Calculate the timestamp of the measurement
                 timestamp = wpilib.Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
                 pose = Pose2d(botpose[0], botpose[1], Rotation2d.fromDegrees(botpose[5]))
