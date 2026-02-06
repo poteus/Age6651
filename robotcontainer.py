@@ -143,7 +143,6 @@ class RobotContainer:
         yaw_rate = imu.get_angular_velocity_z_world().value
         #Pushes it to the limelight
         self.vision.patch_limelight_orientation([yaw, yaw_rate, pitch, 0, roll, 0])
-        print("yaw =", yaw)
         # Reads all available vision updates
         vision_updates = self.vision.get_estimated_global_pose()
         std_devs = (0.7, 0.7, 999999.0)  # Standard deviations for x, y, and theta
