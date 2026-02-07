@@ -5,35 +5,62 @@ from rev import SparkMax, SparkLowLevel, SparkMaxConfig, ResetMode, PersistMode
 from wpilib import SmartDashboard
 from wpimath.units import seconds
 
+from ntcore import NetworkTableInstance
+
 class Indexer(commands2.Subsystem):
     def __init__(self):
         super().__init__()
 
-        # 1. Initialize Motors (Assuming CAN IDs 10 and 11)
+        # Init network table for speed of indexer
+        nt = NetworkTableInstance.getDefault()
+        table = nt.getTable("SmartDashboard")
+
+        # Create a Topic and a Subscriber
+        # This creates the "box" on the dashboard. Defaulting to 0.0 RPS.
+        self.velocity_topic = table.getDoubleTopic("Indexer/IndexerTargetRPS")
+        self.velocity_pub = self.velocity_topic.publish()
+        self.velocity_pub.set(0.0)
+        self.velocity_sub = self.velocity_topic.subscribe(0.0)
+        
+        # We also want to publish the ACTUAL speed so we can compare them
+        self.actual_pub = table.getDoubleTopic("Indexer/IndexerActualRPS").publish()
+
+        # Initialize Motors (Assuming CAN IDs 10 and 11)
         self.leader = SparkMax(10, SparkLowLevel.MotorType.kBrushless)
         self.follower = SparkMax(11, SparkLowLevel.MotorType.kBrushless)
 
-        # 2. Create Configuration
+        # Create Configuration
         # We set the conversion factor to 1/60 to turn RPM into RPS
         # Velocity = (RPM / 60) = Revolutions per Second
-        config = SparkMaxConfig()
+        config10 = SparkMaxConfig()
         
-        config.encoder.velocityConversionFactor(1.0 / 60.0) 
-        config.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-
+        config10.encoder.velocityConversionFactor(1.0 / 60.0) 
+        config10.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
+        config10.inverted(True)
         # Set PID Gains (Placeholder values - update after tuning)
-        config.closedLoop.P(0.1).I(0).D(0).velocityFF(0.12)
+        # kS = 0.58914
+        # kV = 0.13408
+        # kA = 0.012128
+        config10.closedLoop.P(0.1).I(0).D(0).velocityFF(0.12)
         
+        # Velocity = (RPM / 60) = Revolutions per Second
+        config11 = SparkMaxConfig()
+        
+        config11.encoder.velocityConversionFactor(1.0 / 60.0) 
+        config11.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
+        config11.inverted(True)
+        # Set PID Gains (Placeholder values - update after tuning)
+        config11.closedLoop.P(0.1).I(0).D(0).velocityFF(0.12)
         # Follower logic
-        config.follow(10) # Follow the leader on CAN ID 10
+        config11.follow(10) # Follow the leader on CAN ID 10
 
         # Apply configuration to both motors
         self.leader.configure(
-            config,
+            config10,
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
         self.follower.configure(
-            config, 
+            config11, 
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
 
