@@ -78,8 +78,8 @@ class RobotContainer:
         self._joystick = CommandXboxController(0)
 
         self.indexer = Indexer()
-        self.shooter = Shooter()
-        self.turret = Turret()
+        # self.shooter = Shooter()
+        # self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Build the auto chooser and put it on the dashboard
@@ -117,6 +117,15 @@ class RobotContainer:
         )
         self._joystick.start().and_(self._joystick.a()).whileTrue(
             self.indexer.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+        )
+
+        self._joystick.rightTrigger().whileTrue(
+            commands2.cmd.run(
+                lambda: self.indexer.set_velocity(self.indexer.velocity_sub.get()),
+                self.indexer
+            )
+        ).onFalse(
+            commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)
         )
 
         # --- Logging Control ---
