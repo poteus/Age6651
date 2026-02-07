@@ -76,7 +76,10 @@ class Indexer(commands2.Subsystem):
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 lambda volts: self.leader.setVoltage(volts),
-                None, # Log consumer (handled automatically in 2026)
+                lambda log: log.motor("indexer-leader")
+                    .voltage(self.leader.getAppliedOutput() * self.leader.getBusVoltage())
+                    .position(self.encoder.getPosition())
+                    .velocity(self.encoder.getVelocity()), # Log consumer (handled automatically in 2026)
                 self
             )
         )
@@ -92,6 +95,15 @@ class Indexer(commands2.Subsystem):
         # Log data for debugging
         SmartDashboard.putNumber("Indexer/Velocity RPS", self.encoder.getVelocity())
         SmartDashboard.putNumber("Indexer/Applied Output", self.leader.getAppliedOutput())
+         # Read the value from the Dashboard
+        target_rps = self.velocity_sub.get()
+            
+        # Apply the speed (only if you want it constantly running for testing)
+        # In a real match, you'd use a command, but for bench testing this works:
+        # self.set_velocity(target_rps)
+
+        # Publish the actual velocity for the graph
+        self.actual_pub.set(self.encoder.getVelocity())
 
     # --- SysId Command Factories ---
     def sysIdQuasistatic(self, direction):
