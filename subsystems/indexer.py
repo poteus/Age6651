@@ -26,8 +26,8 @@ class Indexer(commands2.Subsystem):
         self.actual_pub = table.getDoubleTopic("Indexer/IndexerActualRPS").publish()
 
         # Initialize Motors (Assuming CAN IDs 10 and 11)
-        self.leader = SparkMax(10, SparkLowLevel.MotorType.kBrushless)
-        self.follower = SparkMax(11, SparkLowLevel.MotorType.kBrushless)
+        self.front = SparkMax(11, SparkLowLevel.MotorType.kBrushless)
+        self.back = SparkMax(10, SparkLowLevel.MotorType.kBrushless)
 
         # Create Configuration
         # We set the conversion factor to 1/60 to turn RPM into RPS
@@ -76,19 +76,19 @@ class Indexer(commands2.Subsystem):
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Drive both motors at the same voltage
                 lambda volts: (
-                    self.leader.setVoltage(volts),
-                    self.follower.setVoltage(volts)
+                    self.front.setVoltage(volts),
+                    self.back.setVoltage(volts)
                 ),
                 # Log BOTH motors as separate "log.motor" entries
                 lambda log: (
                     log.motor("front-rollers")
-                        .voltage(self.leader.getAppliedOutput() * self.leader.getBusVoltage())
-                        .position(self.leader.getEncoder().getPosition())
-                        .velocity(self.leader.getEncoder().getVelocity()),
+                        .voltage(self.front.getAppliedOutput() * self.front.getBusVoltage())
+                        .position(self.front.getEncoder().getPosition())
+                        .velocity(self.front.getEncoder().getVelocity()),
                     log.motor("back-rollers")
-                        .voltage(self.follower.getAppliedOutput() * self.follower.getBusVoltage())
-                        .position(self.follower.getEncoder().getPosition())
-                        .velocity(self.follower.getEncoder().getVelocity())
+                        .voltage(self.back.getAppliedOutput() * self.back.getBusVoltage())
+                        .position(self.back.getEncoder().getPosition())
+                        .velocity(self.back.getEncoder().getVelocity())
                 ),
                 self
             )
@@ -96,17 +96,18 @@ class Indexer(commands2.Subsystem):
 
     def set_velocity(self, rps: float):
         """Sets the indexer speed in Revolutions per Second."""
-        self.closed_loop.setReference(rps, SparkMax.ControlType.kVelocity)
-        follower_target = rps * (7.0 / 5.0)
-        self.follower_loop.setReference(follower_target, SparkMax.ControlType.kVelocity)
+        self.front_loop.setReference(rps, SparkMax.ControlType.kVelocity)
+        back_target = rps * (7.0 / 5.0)
+        self.back_loop.setReference(back_target, SparkMax.ControlType.kVelocity)
 
     def stop(self):
-        self.leader.stopMotor()
+        self.front.stopMotor()
+        self.back.stopMotor()
 
     def periodic(self):
         # Log data for debugging
-        SmartDashboard.putNumber("Indexer/Velocity RPS", self.encoder.getVelocity())
-        SmartDashboard.putNumber("Indexer/Applied Output", self.leader.getAppliedOutput())
+        SmartDashboard.putNumber("Indexer/Velocity RPS", self.front_encoder.getVelocity())
+        SmartDashboard.putNumber("Indexer/Applied Output", self.front.getAppliedOutput())
          # Read the value from the Dashboard
         target_rps = self.velocity_sub.get()
             
@@ -115,7 +116,7 @@ class Indexer(commands2.Subsystem):
         # self.set_velocity(target_rps)
 
         # Publish the actual velocity for the graph
-        self.actual_pub.set(self.encoder.getVelocity())
+        self.actual_pub.set(self.front_encoder.getVelocity())
 
     # --- SysId Command Factories ---
     def sysIdQuasistatic(self, direction):
