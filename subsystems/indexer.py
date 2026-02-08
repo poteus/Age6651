@@ -63,6 +63,7 @@ class Indexer(commands2.Subsystem):
             PersistMode.kPersistParameters)
 
         self.closed_loop = self.leader.getClosedLoopController()
+        self.follower_loop = self.follower.getClosedLoopController()
         self.encoder = self.leader.getEncoder()
 
         # 3. SysId Characterization Routine
