@@ -74,11 +74,22 @@ class Indexer(commands2.Subsystem):
                 timeout=seconds(10)
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
-                lambda volts: self.leader.setVoltage(volts),
-                lambda log: log.motor("indexer-leader")
-                    .voltage(self.leader.getAppliedOutput() * self.leader.getBusVoltage())
-                    .position(self.encoder.getPosition())
-                    .velocity(self.encoder.getVelocity()), # Log consumer (handled automatically in 2026)
+                # Drive both motors at the same voltage
+                lambda volts: (
+                    self.leader.setVoltage(volts),
+                    self.follower.setVoltage(volts)
+                ),
+                # Log BOTH motors as separate "log.motor" entries
+                lambda log: (
+                    log.motor("front-rollers")
+                        .voltage(self.leader.getAppliedOutput() * self.leader.getBusVoltage())
+                        .position(self.leader.getEncoder().getPosition())
+                        .velocity(self.leader.getEncoder().getVelocity()),
+                    log.motor("back-rollers")
+                        .voltage(self.follower.getAppliedOutput() * self.follower.getBusVoltage())
+                        .position(self.follower.getEncoder().getPosition())
+                        .velocity(self.follower.getEncoder().getVelocity())
+                ),
                 self
             )
         )
