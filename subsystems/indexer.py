@@ -86,6 +86,8 @@ class Indexer(commands2.Subsystem):
     def set_velocity(self, rps: float):
         """Sets the indexer speed in Revolutions per Second."""
         self.closed_loop.setReference(rps, SparkMax.ControlType.kVelocity)
+        follower_target = rps * (7.0 / 5.0)
+        self.follower_loop.setReference(follower_target, SparkMax.ControlType.kVelocity)
 
     def stop(self):
         self.leader.stopMotor()
