@@ -77,8 +77,8 @@ class RobotContainer:
 
         self._joystick = CommandXboxController(0)
 
-        self.indexer = Indexer()
-        # self.shooter = Shooter()
+        # self.indexer = Indexer()
+        self.shooter = Shooter()
         # self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
 
@@ -107,30 +107,36 @@ class RobotContainer:
         # --- Indexer Characterization (SysId) ---
         # Keep these active for your testing
         self._joystick.start().and_(self._joystick.y()).whileTrue(
-            self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
+            self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kForward)
         )
         self._joystick.start().and_(self._joystick.x()).whileTrue(
-            self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
+            self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kReverse)
         )
         self._joystick.start().and_(self._joystick.b()).whileTrue(
-            self.indexer.sysIdDynamic(SysIdRoutine.Direction.kForward)
+            self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kForward)
         )
         self._joystick.start().and_(self._joystick.a()).whileTrue(
-            self.indexer.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+            self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kReverse)
         )
 
         self._joystick.rightTrigger().whileTrue(
             commands2.cmd.run(
-                lambda: self.indexer.set_velocity(self.indexer.velocity_sub.get()),
-                self.indexer
+                lambda: self.shooter.set_flywheel_rps(self.shooter.velocity_sub.get()),
+                self.shooter
             )
         ).onFalse(
-            commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)
+            commands2.cmd.runOnce(lambda: self.shooter.stop(), self.shooter)
         )
 
-        # --- Logging Control ---
-        self._joystick.leftStick().onTrue(commands2.cmd.runOnce(SignalLogger.start))
-        self._joystick.rightStick().onTrue(commands2.cmd.runOnce(SignalLogger.stop))
+        # --- LOGGER CONTROL ---
+        # Press "Start" button to begin logging
+        self._joystick.leftStick().onTrue(
+            commands2.cmd.runOnce(lambda: SignalLogger.start())
+        )
+        # We'll use the Back button for both stopping the logger AND resetting jams
+        self._joystick.rightStick().onTrue(
+            commands2.cmd.runOnce(lambda: SignalLogger.stop())
+        )
 
        # --- GLOBAL KILL SWITCH ---
         # Pressing the 'Back' (View) button will cancel ALL running commands.
