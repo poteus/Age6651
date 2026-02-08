@@ -41,19 +41,17 @@ class Indexer(commands2.Subsystem):
         # kS = 0.58914
         # kV = 0.13408
         # kA = 0.012128
-        config10.closedLoop.P(0.1).I(0).D(0).velocityFF(0.12)
+        config10.closedLoop.P(0.01).I(0).D(0).velocityFF(0.13408)
         
         # Velocity = (RPM / 60) = Revolutions per Second
         config11 = SparkMaxConfig()
         
         config11.encoder.velocityConversionFactor(1.0 / 60.0) 
         config11.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config11.inverted(True)
+        config11.inverted(False)
         # Set PID Gains (Placeholder values - update after tuning)
-        config11.closedLoop.P(0.1).I(0).D(0).velocityFF(0.12)
-        # Follower logic
-        config11.follow(10) # Follow the leader on CAN ID 10
-
+        config11.closedLoop.P(0.01).I(0).D(0).velocityFF(0.13408) # kV
+        
         # Apply configuration to both motors
         self.leader.configure(
             config10,
