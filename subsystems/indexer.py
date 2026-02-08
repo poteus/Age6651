@@ -36,35 +36,43 @@ class Indexer(commands2.Subsystem):
         
         config10.encoder.velocityConversionFactor(1.0 / 60.0) 
         config10.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config10.inverted(True)
+        config10.inverted(False)
+      
         # Set PID Gains (Placeholder values - update after tuning)
-        # kS = 0.58914
-        # kV = 0.13408
-        # kA = 0.012128
-        config10.closedLoop.P(0.01).I(0).D(0).velocityFF(0.13408)
+        # kS = 0.14395
+        # kV = 0.12408
+        # kA = 0.012706
+        #kP = 0.050463
+        config10.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.12408) # kV
         
         # Velocity = (RPM / 60) = Revolutions per Second
         config11 = SparkMaxConfig()
         
         config11.encoder.velocityConversionFactor(1.0 / 60.0) 
         config11.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config11.inverted(False)
+        config11.inverted(True)
+
         # Set PID Gains (Placeholder values - update after tuning)
-        config11.closedLoop.P(0.01).I(0).D(0).velocityFF(0.13408) # kV
+        # kS = 0.47088
+        # kV = 0.13267
+        # kA = 0.0068033
+        #kP = 0.00026339
+        config11.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.13267)
         
         # Apply configuration to both motors
-        self.leader.configure(
+        self.front.configure(
             config10,
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
-        self.follower.configure(
+        self.back.configure(
             config11, 
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
 
-        self.closed_loop = self.leader.getClosedLoopController()
-        self.follower_loop = self.follower.getClosedLoopController()
-        self.encoder = self.leader.getEncoder()
+        self.front_loop = self.front.getClosedLoopController()
+        self.back_loop = self.back.getClosedLoopController()
+        self.front_encoder = self.front.getEncoder()
+        self.back_encoder = self.front.getEncoder()
 
         # 3. SysId Characterization Routine
         self.sys_id_routine = commands2.sysid.SysIdRoutine(
