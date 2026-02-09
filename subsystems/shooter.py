@@ -48,38 +48,43 @@ class Shooter(commands2.Subsystem):
 
         self.flywheel.configurator.apply(fw_cfg)
 
+
+
         # Hood Setup (Kraken X44 - CAN ID 17) ---
-        # self.hood = hardware.TalonFX(17)
-        # hood_cfg = configs.TalonFXConfiguration()
+        self.hood = hardware.TalonFX(17)
+        hood_cfg = configs.TalonFXConfiguration()
+
+        hood_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        hood_cfg.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         
-        # hood_cfg.feedback.sensor_to_mechanism_ratio = self.HOOD_GEAR_RATIO
+        hood_cfg.feedback.sensor_to_mechanism_ratio = self.HOOD_GEAR_RATIO
         
         # Soft Limits
-        # hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.25 
-        # hood_cfg.software_limit_switch.forward_soft_limit_enable = True
-        # hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.0
-        # hood_cfg.software_limit_switch.reverse_soft_limit_enable = True
+        hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.25 
+        hood_cfg.software_limit_switch.forward_soft_limit_enable = True
+        hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.0
+        hood_cfg.software_limit_switch.reverse_soft_limit_enable = True
         
         # Motion Magic Settings
-        # hood_cfg.motion_magic.motion_magic_cruise_velocity = 0.5 
-        # hood_cfg.motion_magic.motion_magic_acceleration = 1.5
+        hood_cfg.motion_magic.motion_magic_cruise_velocity = 0.5 
+        hood_cfg.motion_magic.motion_magic_acceleration = 1.5
         
         # Current limits for the smaller X44 motor
-        # hood_cfg.current_limits.stator_current_limit = 40.0 
-        # hood_cfg.current_limits.stator_current_limit_enable = True
+        hood_cfg.current_limits.stator_current_limit = 40.0 
+        hood_cfg.current_limits.stator_current_limit_enable = True
         
-        # self.hood.configurator.apply(hood_cfg)
+        self.hood.configurator.apply(hood_cfg)
 
         # Torque Control Requests ---
         # FOC (Field Oriented Control) provides the most efficient torque
         self.fw_torque_request_vel = controls.VelocityTorqueCurrentFOC(0)
         self.fw_torque_request = controls.TorqueCurrentFOC(0)
-        # self.hood_torque_request = controls.MotionMagicTorqueCurrentFOC(0)
+        self.hood_torque_request = controls.MotionMagicTorqueCurrentFOC(0)
         
         # SysId still uses Voltage for standard characterization
         self.voltage_request = controls.VoltageOut(0)
 
-        # SysId Routines ---
+        # SysId Routines for FLYWHEEL
         self.flywheel_sys_id = commands2.sysid.SysIdRoutine(
             commands2.sysid.SysIdRoutine.Config(
                 rampRate=6.0, 
