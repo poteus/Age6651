@@ -72,7 +72,7 @@ class Indexer(commands2.Subsystem):
         self.front_loop = self.front.getClosedLoopController()
         self.back_loop = self.back.getClosedLoopController()
         self.front_encoder = self.front.getEncoder()
-        self.back_encoder = self.front.getEncoder()
+        self.back_encoder = self.back.getEncoder()
 
         # 3. SysId Characterization Routine
         self.sys_id_routine = commands2.sysid.SysIdRoutine(
