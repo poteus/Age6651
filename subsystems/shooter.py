@@ -31,11 +31,14 @@ class Shooter(commands2.Subsystem):
         # Flywheel Setup (Kraken X60 - CAN ID 16) ---
         self.flywheel = hardware.TalonFX(16)
         fw_cfg = configs.TalonFXConfiguration()
-        fw_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
-        
-        # Torque Current specific tuning
-        # kP for Torque Current is often much smaller than Voltage kP
-        fw_cfg.slot0.k_p = 5.0  # Amps per rps of error
+
+        fw_cfg.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        fw_cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST
+
+        fw_cfg.slot0.k_s = 16.494  # Amps
+        fw_cfg.slot0.k_v = 0.26707  # Amps per RPS
+        fw_cfg.slot0.k_a = 0.68816  # Amps per RPS^2
+        fw_cfg.slot0.k_p = 1.0869   # Amps per Error(RPS)
         fw_cfg.slot0.k_i = 0.0
         fw_cfg.slot0.k_d = 0.0
         
