@@ -96,23 +96,38 @@ class Shooter(commands2.Subsystem):
                 # How to apply the amps
                 lambda amps: self.flywheel.set_control(self.fw_torque_request.with_output(amps)),
                 # How to log (SignalLogger handles the heavy lifting, so we return None here)
-                lambda log: None, 
+                lambda log: log.motor("flywheel")
+                    .voltage(self.flywheel.get_torque_current().value) 
+                    .position(self.flywheel.get_position().value)
+                    .velocity(self.flywheel.get_velocity().value), 
                 self
             )
         )
 
-        # self.hood_sys_id = commands2.sysid.SysIdRoutine(
-        #     commands2.sysid.SysIdRoutine.Config(rampRate=1.0, stepVoltage=4.0, timeout=seconds(5)),
-        #     commands2.sysid.SysIdRoutine.Mechanism(
-        #         lambda volts: self.hood.set_control(self.voltage_request.with_output(volts)),
-        #         None, self
-        #     )
-        # )
+        # SysId Routines for HOOD
+        self.hood_sys_id = commands2.sysid.SysIdRoutine(
+            commands2.sysid.SysIdRoutine.Config(
+                rampRate=1.5, 
+                stepVoltage=5.0, 
+                timeout=seconds(2),
+                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
+            ),
+            commands2.sysid.SysIdRoutine.Mechanism(
+                # How to apply the amps
+                lambda amps: self.hood.set_control(self.fw_torque_request.with_output(amps)),
+                # How to log (SignalLogger handles the heavy lifting, so we return None here)
+                lambda log: log.motor("hood")
+                    .voltage(self.hood.get_torque_current().refresh().value) 
+                    .position(self.hood.get_position().refresh().value)
+                    .velocity(self.hood.get_velocity().refresh().value), 
+                self
+            )
+        )
 
     # --- Methods ---
     def set_flywheel_rps(self, rps: float):
         """Sets flywheel speed using Torque-Current FOC."""
-        self.flywheel.set_control(self.fw_torque_request.with_velocity(rps))
+        self.flywheel.set_control(self.fw_torque_request_vel.with_velocity(rps))
 
     # def set_hood_position(self, rotations: float):
     #     """Sets hood position using Motion Magic Torque-Current FOC."""
