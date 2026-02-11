@@ -77,7 +77,7 @@ class RobotContainer:
 
         self._joystick = CommandXboxController(0)
 
-        # self.indexer = Indexer()
+        self.indexer = Indexer()
         self.shooter = Shooter()
         # self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
@@ -106,46 +106,59 @@ class RobotContainer:
 
         # --- Indexer Characterization (SysId) ---
         # Keep these active for your testing
-        self._joystick.start().and_(self._joystick.y()).whileTrue(
-            self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kForward)
-        )
-        self._joystick.start().and_(self._joystick.x()).whileTrue(
-            self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kReverse)
-        )
-        self._joystick.start().and_(self._joystick.b()).whileTrue(
-            self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kForward)
-        )
-        self._joystick.start().and_(self._joystick.a()).whileTrue(
-            self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kReverse)
-        )
+        # self._joystick.start().and_(self._joystick.y()).whileTrue(
+        #     self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kForward)
+        # )
+        # self._joystick.start().and_(self._joystick.x()).whileTrue(
+        #     self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kReverse)
+        # )
+        # self._joystick.start().and_(self._joystick.b()).whileTrue(
+        #     self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kForward)
+        # )
+        # self._joystick.start().and_(self._joystick.a()).whileTrue(
+        #     self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kReverse)
+        # )
 
         self._joystick.rightTrigger().whileTrue(
+            # 1. Start the flywheel
             commands2.cmd.run(
-                lambda: self.shooter.set_flywheel_rps(self.shooter.velocity_sub.get()),
+                lambda: self.shooter.set_flywheel_rps(60),
                 self.shooter
+            )).onFalse(
+            # 3. Stop everything when trigger is released
+            commands2.cmd.runOnce(lambda: self.shooter.stop(), self.shooter)
+        )
+
+        self._joystick.leftTrigger().whileTrue((
+                # 2. Wait for flywheel to be fast enough, THEN run indexer
+                    commands2.cmd.run(
+                        lambda: self.indexer.set_velocity(80),
+                        self.indexer
+                    )
             )
         ).onFalse(
-            commands2.cmd.runOnce(lambda: self.shooter.stop(), self.shooter)
+            # 3. Stop everything when trigger is released
+            commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)
         )
 
         # --- LOGGER CONTROL ---
         # Press "Start" button to begin logging
-        self._joystick.leftStick().onTrue(
-            commands2.cmd.runOnce(lambda: SignalLogger.start())
-        )
-        # We'll use the Back button for both stopping the logger AND resetting jams
-        self._joystick.rightStick().onTrue(
-            commands2.cmd.runOnce(lambda: SignalLogger.stop())
-        )
+        # self._joystick.leftStick().onTrue(
+        #     commands2.cmd.runOnce(lambda: SignalLogger.start())
+        # )
+        # # We'll use the Back button for both stopping the logger AND resetting jams
+        # self._joystick.rightStick().onTrue(
+        #     commands2.cmd.runOnce(lambda: SignalLogger.stop())
+        # )
 
        # --- GLOBAL KILL SWITCH ---
         # Pressing the 'Back' (View) button will cancel ALL running commands.
         # This will immediately stop the Indexer and Drivetrain.
-        self._joystick.back().onTrue(
-            commands2.cmd.runOnce(
-                lambda: commands2.CommandScheduler.getInstance().cancelAll()
-            ).ignoringDisable(True)
-        )
+        # self._joystick.back().onTrue(
+        #     commands2.cmd.runOnce(
+        #         lambda: commands2.CommandScheduler.getInstance().cancelAll()
+        #     ).ignoringDisable(True)
+        # )
 
     # Updates the pose from Vision subsystem
     def update_vision_odometry(self):

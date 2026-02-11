@@ -24,6 +24,9 @@ class Shooter(commands2.Subsystem):
         self.velocity_pub = self.velocity_topic.publish()
         self.velocity_pub.set(0.0)
         self.velocity_sub = self.velocity_topic.subscribe(0.0)
+
+        self.position_topic = table.getDoubleTopic("Shooter/HoodEncoder")
+        self.position_pub = self.position_topic.publish()
         
         # We also want to publish the ACTUAL speed so we can compare them
         self.actual_pub = table.getDoubleTopic("Shooter/ShooterActualRPS").publish()
@@ -59,10 +62,18 @@ class Shooter(commands2.Subsystem):
         
         hood_cfg.feedback.sensor_to_mechanism_ratio = self.HOOD_GEAR_RATIO
         
+        # Hood PID values
+        hood_cfg.slot0.k_s = 6.0413 # Amps
+        hood_cfg.slot0.k_v = 11.553  # Amps per RPS
+        hood_cfg.slot0.k_a = 1.772  # Amps per RPS^2
+        hood_cfg.slot0.k_p = 1.2479   # Amps per Error(RPS)
+        hood_cfg.slot0.k_i = 0.0
+        hood_cfg.slot0.k_d = 0.0
+
         # Soft Limits
-        hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.25 
+        hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.117 
         hood_cfg.software_limit_switch.forward_soft_limit_enable = True
-        hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.0
+        hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.006
         hood_cfg.software_limit_switch.reverse_soft_limit_enable = True
         
         # Motion Magic Settings
@@ -80,6 +91,7 @@ class Shooter(commands2.Subsystem):
         self.fw_torque_request_vel = controls.VelocityTorqueCurrentFOC(0)
         self.fw_torque_request = controls.TorqueCurrentFOC(0)
         self.hood_torque_request = controls.MotionMagicTorqueCurrentFOC(0)
+        self.torque_current_request = controls.TorqueCurrentFOC(0)
         
         # SysId still uses Voltage for standard characterization
         self.voltage_request = controls.VoltageOut(0)
@@ -107,14 +119,14 @@ class Shooter(commands2.Subsystem):
         # SysId Routines for HOOD
         self.hood_sys_id = commands2.sysid.SysIdRoutine(
             commands2.sysid.SysIdRoutine.Config(
-                rampRate=1.5, 
-                stepVoltage=5.0, 
-                timeout=seconds(2),
+                rampRate=2, 
+                stepVoltage=20, 
+                timeout=seconds(10),
                 recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # How to apply the amps
-                lambda amps: self.hood.set_control(self.fw_torque_request.with_output(amps)),
+                lambda amps: self.hood.set_control(self.torque_current_request.with_output(amps)),
                 # How to log (SignalLogger handles the heavy lifting, so we return None here)
                 lambda log: log.motor("hood")
                     .voltage(self.hood.get_torque_current().refresh().value) 
@@ -141,7 +153,7 @@ class Shooter(commands2.Subsystem):
         # Tracking torque (current) output is useful for debugging
         SmartDashboard.putNumber("Shooter/Flywheel Torque (Amps)", self.flywheel.get_torque_current().value)
         SmartDashboard.putNumber("Shooter/Flywheel RPS", self.flywheel.get_velocity().value)
-        # SmartDashboard.putNumber("Shooter/Hood Position", self.hood.get_position().value)
+        SmartDashboard.putNumber("Shooter/HoodEncoder", self.hood.get_position().value)
 
     # --- SysId Factories ---
     def sysIdFlywheelQuasistatic(self, direction):
@@ -150,8 +162,8 @@ class Shooter(commands2.Subsystem):
     def sysIdFlywheelDynamic(self, direction):
         return self.flywheel_sys_id.dynamic(direction)
 
-    # def sysIdHoodQuasistatic(self, direction):
-    #     return self.hood_sys_id.quasistatic(direction)
+    def sysIdHoodQuasistatic(self, direction):
+        return self.hood_sys_id.quasistatic(direction)
 
-    # def sysIdHoodDynamic(self, direction):
-    #     return self.hood_sys_id.dynamic(direction)
+    def sysIdHoodDynamic(self, direction):
+        return self.hood_sys_id.dynamic(direction)

@@ -25,47 +25,47 @@ class Indexer(commands2.Subsystem):
         # We also want to publish the ACTUAL speed so we can compare them
         self.actual_pub = table.getDoubleTopic("Indexer/IndexerActualRPS").publish()
 
-        # Initialize Motors (Assuming CAN IDs 10 and 11)
-        self.front = SparkMax(11, SparkLowLevel.MotorType.kBrushless)
-        self.back = SparkMax(10, SparkLowLevel.MotorType.kBrushless)
+        # Initialize Motors (Assuming CAN IDs 50 and 51)
+        self.front = SparkMax(51, SparkLowLevel.MotorType.kBrushless)
+        self.back = SparkMax(50, SparkLowLevel.MotorType.kBrushless)
 
         # Create Configuration
         # We set the conversion factor to 1/60 to turn RPM into RPS
         # Velocity = (RPM / 60) = Revolutions per Second
-        config10 = SparkMaxConfig()
+        config50 = SparkMaxConfig()
         
-        config10.encoder.velocityConversionFactor(1.0 / 60.0) 
-        config10.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config10.inverted(False)
+        config50.encoder.velocityConversionFactor(1.0 / 60.0) 
+        config50.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
+        config50.inverted(True)
       
         # Set PID Gains (Placeholder values - update after tuning)
         # kS = 0.14395
         # kV = 0.12408
         # kA = 0.012706
         #kP = 0.050463
-        config10.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.12408) # kV
+        config50.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.12408) # kV
         
         # Velocity = (RPM / 60) = Revolutions per Second
-        config11 = SparkMaxConfig()
+        config51 = SparkMaxConfig()
         
-        config11.encoder.velocityConversionFactor(1.0 / 60.0) 
-        config11.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config11.inverted(True)
+        config51.encoder.velocityConversionFactor(1.0 / 60.0) 
+        config51.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
+        config51.inverted(False)
 
         # Set PID Gains (Placeholder values - update after tuning)
         # kS = 0.47088
         # kV = 0.13267
         # kA = 0.0068033
         #kP = 0.00026339
-        config11.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.13267)
+        config51.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.13267)
         
         # Apply configuration to both motors
         self.front.configure(
-            config10,
+            config50,
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
         self.back.configure(
-            config11, 
+            config51, 
             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
 
@@ -79,7 +79,7 @@ class Indexer(commands2.Subsystem):
             commands2.sysid.SysIdRoutine.Config(
                 rampRate=1.0, # 1V per second
                 stepVoltage=7.0,      # 7V for dynamic test
-                timeout=seconds(10)
+                timeout=seconds(50)
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Drive both motors at the same voltage
