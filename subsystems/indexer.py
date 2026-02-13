@@ -8,6 +8,10 @@ from wpimath.units import seconds
 from ntcore import NetworkTableInstance
 
 class Indexer(commands2.Subsystem):
+    '''
+    The indexer subsystem funnels the fuel from wherever we store fuel all the way to the shooter
+    '''
+
     def __init__(self):
         super().__init__()
 

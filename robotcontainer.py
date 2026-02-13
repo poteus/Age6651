@@ -15,7 +15,8 @@ from telemetry import Telemetry
 from phoenix6 import swerve, SignalLogger
 from subsystems.vision import Vision
 from subsystems.indexer import Indexer
-from subsystem.shooter import Shooter
+from subsystems.shooter import Shooter
+from subsystems.turret import Turret
 
 import wpilib
 from wpilib import DriverStation
@@ -51,6 +52,7 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
         self.indexer = Indexer()
         self.shooter = Shooter()
+        self.turret = Turret()
 
         # Constants
         self._max_speed = (

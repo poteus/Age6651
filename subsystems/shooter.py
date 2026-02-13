@@ -8,6 +8,10 @@ from wpilib import SmartDashboard
 from ntcore import NetworkTableInstance
 
 class Shooter(commands2.Subsystem):
+    '''
+    The shooter subsystem controls the output of fuel
+    '''
+
     # 5:1 (Gearbox) * (120/10) (Gears) = 60:1
     HOOD_GEAR_RATIO = 60.0
     
