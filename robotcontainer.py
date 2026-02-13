@@ -15,6 +15,7 @@ from telemetry import Telemetry
 from phoenix6 import swerve, SignalLogger
 from subsystems.vision import Vision
 from subsystems.indexer import Indexer
+from subsystem.shooter import Shooter
 
 import wpilib
 from wpilib import DriverStation
@@ -31,29 +32,31 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
+        # Grabs the serial number from RobotController and prints it
+        serial = wpilib.RobotController.getSerialNumber(); print(f"Robot Serial Number: {serial}")
 
-        # Detect which roborio is running to know if it is Murphy or Crimson
-        serial = wpilib.RobotController.getSerialNumber()
-        print(f"Robot Serial Number: {serial}")
+        # Detect which roborio is running to know if it is Murphy or Crimson using the serial number
         if serial == "03415952":
-            print("This is Crimson.")
-            # Crimson has two cameras
+            print("This is Crimson.") # Crimson has two cameras
+
             #self.vision = Vision(["limelight-front", "limelight-back"])
             from generated.Crimson_tuner_constants import TunerConstants 
         else:
-            print("This is Murphy.")
-            # Murphy (or anything else) has one
+            print("This is Murphy.") # Murphy (or anything else) has only one camera
+
             #self.vision = Vision(["limelight-front"])
             from generated.Murphy_tuner_constants import TunerConstants 
 
         # Subsystems
         self.drivetrain = TunerConstants.create_drivetrain()
         self.indexer = Indexer()
+        self.shooter = Shooter()
 
         # Constants
         self._max_speed = (
             TunerConstants.speed_at_12_volts
         )  # speed_at_12_volts desired top speed
+
         self._max_angular_rate = rotationsToRadians(
             0.75
         )  # 3/4 of a rotation per second max angular velocity
