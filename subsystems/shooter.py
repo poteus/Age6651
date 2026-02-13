@@ -51,8 +51,6 @@ class Shooter(commands2.Subsystem):
 
         self.flywheel.configurator.apply(fw_cfg)
 
-
-
         # Hood Setup (Kraken X44 - CAN ID 17) ---
         self.hood = hardware.TalonFX(17)
         hood_cfg = configs.TalonFXConfiguration()
@@ -96,46 +94,6 @@ class Shooter(commands2.Subsystem):
         # SysId still uses Voltage for standard characterization
         self.voltage_request = controls.VoltageOut(0)
 
-        # SysId Routines for FLYWHEEL
-        self.flywheel_sys_id = commands2.sysid.SysIdRoutine(
-            commands2.sysid.SysIdRoutine.Config(
-                rampRate=6.0, 
-                stepVoltage=40.0, 
-                timeout=seconds(10),
-                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
-            ),
-            commands2.sysid.SysIdRoutine.Mechanism(
-                # How to apply the amps
-                lambda amps: self.flywheel.set_control(self.fw_torque_request.with_output(amps)),
-                # How to log (SignalLogger handles the heavy lifting, so we return None here)
-                lambda log: log.motor("flywheel")
-                    .voltage(self.flywheel.get_torque_current().value) 
-                    .position(self.flywheel.get_position().value)
-                    .velocity(self.flywheel.get_velocity().value), 
-                self
-            )
-        )
-
-        # SysId Routines for HOOD
-        self.hood_sys_id = commands2.sysid.SysIdRoutine(
-            commands2.sysid.SysIdRoutine.Config(
-                rampRate=2, 
-                stepVoltage=20, 
-                timeout=seconds(10),
-                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
-            ),
-            commands2.sysid.SysIdRoutine.Mechanism(
-                # How to apply the amps
-                lambda amps: self.hood.set_control(self.torque_current_request.with_output(amps)),
-                # How to log (SignalLogger handles the heavy lifting, so we return None here)
-                lambda log: log.motor("hood")
-                    .voltage(self.hood.get_torque_current().refresh().value) 
-                    .position(self.hood.get_position().refresh().value)
-                    .velocity(self.hood.get_velocity().refresh().value), 
-                self
-            )
-        )
-
     # --- Methods ---
     def set_flywheel_rps(self, rps: float):
         """Sets flywheel speed using Torque-Current FOC."""
@@ -154,16 +112,3 @@ class Shooter(commands2.Subsystem):
         SmartDashboard.putNumber("Shooter/Flywheel Torque (Amps)", self.flywheel.get_torque_current().value)
         SmartDashboard.putNumber("Shooter/Flywheel RPS", self.flywheel.get_velocity().value)
         SmartDashboard.putNumber("Shooter/HoodEncoder", self.hood.get_position().value)
-
-    # --- SysId Factories ---
-    def sysIdFlywheelQuasistatic(self, direction):
-        return self.flywheel_sys_id.quasistatic(direction)
-
-    def sysIdFlywheelDynamic(self, direction):
-        return self.flywheel_sys_id.dynamic(direction)
-
-    def sysIdHoodQuasistatic(self, direction):
-        return self.hood_sys_id.quasistatic(direction)
-
-    def sysIdHoodDynamic(self, direction):
-        return self.hood_sys_id.dynamic(direction)

@@ -74,34 +74,6 @@ class Indexer(commands2.Subsystem):
         self.front_encoder = self.front.getEncoder()
         self.back_encoder = self.back.getEncoder()
 
-        # 3. SysId Characterization Routine
-        self.sys_id_routine = commands2.sysid.SysIdRoutine(
-            commands2.sysid.SysIdRoutine.Config(
-                rampRate=1.0, # 1V per second
-                stepVoltage=7.0,      # 7V for dynamic test
-                timeout=seconds(50)
-            ),
-            commands2.sysid.SysIdRoutine.Mechanism(
-                # Drive both motors at the same voltage
-                lambda volts: (
-                    self.front.setVoltage(volts),
-                    self.back.setVoltage(volts)
-                ),
-                # Log BOTH motors as separate "log.motor" entries
-                lambda log: (
-                    log.motor("front-rollers")
-                        .voltage(self.front.getAppliedOutput() * self.front.getBusVoltage())
-                        .position(self.front.getEncoder().getPosition())
-                        .velocity(self.front.getEncoder().getVelocity()),
-                    log.motor("back-rollers")
-                        .voltage(self.back.getAppliedOutput() * self.back.getBusVoltage())
-                        .position(self.back.getEncoder().getPosition())
-                        .velocity(self.back.getEncoder().getVelocity())
-                ),
-                self
-            )
-        )
-
     def set_velocity(self, rps: float):
         """Sets the indexer speed in Revolutions per Second."""
         self.front_loop.setReference(rps, SparkMax.ControlType.kVelocity)
@@ -125,10 +97,3 @@ class Indexer(commands2.Subsystem):
 
         # Publish the actual velocity for the graph
         self.actual_pub.set(self.front_encoder.getVelocity())
-
-    # --- SysId Command Factories ---
-    def sysIdQuasistatic(self, direction):
-        return self.sys_id_routine.quasistatic(direction)
-
-    def sysIdDynamic(self, direction):
-        return self.sys_id_routine.dynamic(direction)
