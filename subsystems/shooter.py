@@ -1,5 +1,6 @@
 import commands2
 import commands2.sysid
+import math
 from wpilib.sysid import SysIdRoutineLog
 from phoenix6 import hardware, configs, controls, signals, SignalLogger
 from wpimath.units import seconds
@@ -106,6 +107,50 @@ class Shooter(commands2.Subsystem):
     # def set_hood_position(self, rotations: float):
     #     """Sets hood position using Motion Magic Torque-Current FOC."""
     #     self.hood.set_control(self.hood_torque_request.with_position(rotations))
+
+    def shoot_distance(self):
+        """This function returns the speed in rps of motor depending on the distance"""
+
+        if not DriverStation.getAlliance(): return print("No alliance color found, method not passed")
+        alliance_color = DriverStation.getAlliance()
+
+        # Get robot position as double-array through NetworkTables
+        network = NetworkTableInstance.getDefault()
+        pose_table = network.getTable("Pose")
+        robot_pose = pose_table.getDoubleArrayTopic("robotPose")
+        
+        # Hub position as Pose2d, based on alliance color
+        hub_position = None
+        if alliance_color == DriverStation.Alliance.kBlue:
+            hub_position = Pose2d(4.625, 4.025, Rotation2d(0))
+        else:
+            hub_position = Pose2d(11.915, 4.025, Rotation2d(0))
+
+        # Distance between robot and hub
+        distance = math.distance((hub_position.X(), hub_position.Y()), (robot_pose[0], robot_pose[1])) # distance = (((hub_position.X() - robot_pose[0])**2) + ((hub_position.Y() - robot_pose[1])**2)) ** .5
+
+        """
+        distance : rps
+        """
+        distance_to_rpm = {
+            1 : 20,
+            2 : 25,
+            3 : 30,
+            4 : 35,
+            5 : 40,
+            6 : 45,
+            7 : 50,
+            8 : 55,
+            9 : 60,
+            10 : 65,
+            11 : 70,
+            12 : 75,
+            13 : 80,
+            14 : 85,
+            15 : 90,
+        }
+
+        # return rps
 
     def stop(self):
         self.flywheel.stopMotor()
