@@ -80,8 +80,8 @@ class Turret(commands2.Subsystem):
             hub_position = Pose2d(11.915, 4.025, Rotation2d(0))
 
         # Difference between robot and hub pose
-        delta_x = (hub_position.X() - robot_pose[0])**2
-        delta_y = (hub_position.Y() - robot_pose[1])**2
+        delta_x = (hub_position.X() - robot_pose[0])
+        delta_y = (hub_position.Y() - robot_pose[1])
 
         # Find rotations based on deltas and make sure its under 1 or over 0
         motor_to_hub_rotations = (math.degrees(delta_x, delta_y))/360
