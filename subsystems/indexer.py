@@ -82,12 +82,13 @@ class Indexer(commands2.Subsystem):
                 timeout=seconds(10)   
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
-                # Drive both motors at the same voltage
-                lambda volts: (
-                    self.run_indexer_voltage(volts),
-                    self.log_indexer(log),
-                    self
-                )
+                # 1. The 'drive' function: takes a voltage and applies it
+                lambda volts: self.run_indexer_voltage(volts),
+                # 2. The 'log' function: provides a log object to record data
+                # Pass the function reference, don't call it here!
+                self.log_indexer,
+                # 3. The subsystem requirement
+                self
             )
         )
 
