@@ -77,18 +77,18 @@ class RobotContainer:
         self._joystick = CommandXboxController(0)
 
         self.indexer = Indexer()
-        self.shooter = Shooter()
-        self.turret = Turret()
+        #self.shooter = Shooter()
+        #self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
 
         # Register the telemetry callback to log swerve, turret, and hood data
-        self.drivetrain.register_telemetry(
-            lambda state: self._logger.telemeterize(
-                state, 
-                self.turret.motor.get_position().value, 
-                self.shooter.hood.get_position().value
-            )
-        )
+        # self.drivetrain.register_telemetry(
+        #     lambda state: self._logger.telemeterize(
+        #         state, 
+        #         self.turret.motor.get_position().value, 
+        #         self.shooter.hood.get_position().value
+        #     )
+        # )
 
         # Build the auto chooser and put it on the dashboard
         self.auto_chooser = AutoBuilder.buildAutoChooser()
@@ -131,17 +131,17 @@ class RobotContainer:
 
         # --- TURRET (Hold Left Trigger) ---
         lt = self._joystick.leftTrigger()
-        lt.and_(self._joystick.y()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-        lt.and_(self._joystick.a()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-        lt.and_(self._joystick.b()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kForward))
-        lt.and_(self._joystick.x()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+        # lt.and_(self._joystick.y()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+        # lt.and_(self._joystick.a()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+        # lt.and_(self._joystick.b()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kForward))
+        # lt.and_(self._joystick.x()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 
         # --- HOOD (Hold Right Trigger) ---
         rt = self._joystick.rightTrigger()
-        rt.and_(self._joystick.y()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kForward))
-        rt.and_(self._joystick.a()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kReverse))
-        rt.and_(self._joystick.b()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kForward))
-        rt.and_(self._joystick.x()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kReverse))
+        # rt.and_(self._joystick.y()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kForward))
+        # rt.and_(self._joystick.a()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kReverse))
+        # rt.and_(self._joystick.b()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kForward))
+        # rt.and_(self._joystick.x()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kReverse))
 
 
         

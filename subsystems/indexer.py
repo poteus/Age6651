@@ -39,10 +39,10 @@ class Indexer(commands2.Subsystem):
         config50.inverted(True)
       
         # Set PID Gains (Placeholder values - update after tuning)
-        # kS = 0.14395
-        # kV = 0.12408
-        # kA = 0.012706
-        #kP = 0.050463
+        kS = 0.17733
+        kV = 0.12379
+        kA = 0.0069758
+        kP = 0.013896
         config50.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.12408) # kV
         
         # Velocity = (RPM / 60) = Revolutions per Second
@@ -53,10 +53,10 @@ class Indexer(commands2.Subsystem):
         config51.inverted(False)
 
         # Set PID Gains (Placeholder values - update after tuning)
-        # kS = 0.47088
-        # kV = 0.13267
-        # kA = 0.0068033
-        #kP = 0.00026339
+        kS = 0.23339
+        kV = 0.12547
+        kA = 0.0077558
+        kP = 0.00015404
         config51.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.13267)
         
         # Apply configuration to both motors
