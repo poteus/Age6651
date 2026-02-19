@@ -35,7 +35,7 @@ class Shooter(commands2.Subsystem):
         self.flywheel = hardware.TalonFX(16)
         fw_cfg = configs.TalonFXConfiguration()
 
-        fw_cfg.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        fw_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
         fw_cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST
 
         fw_cfg.slot0.k_s = 16.494  # Amps
@@ -120,7 +120,7 @@ class Shooter(commands2.Subsystem):
         self.hood_sys_id = commands2.sysid.SysIdRoutine(
             commands2.sysid.SysIdRoutine.Config(
                 rampRate=2, 
-                stepVoltage=20, 
+                stepVoltage=5, 
                 timeout=seconds(10),
                 recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
             ),
@@ -129,9 +129,9 @@ class Shooter(commands2.Subsystem):
                 lambda amps: self.hood.set_control(self.torque_current_request.with_output(amps)),
                 # How to log (SignalLogger handles the heavy lifting, so we return None here)
                 lambda log: log.motor("hood")
-                    .voltage(self.hood.get_torque_current().refresh().value) 
-                    .position(self.hood.get_position().refresh().value)
-                    .velocity(self.hood.get_velocity().refresh().value), 
+                    .voltage(self.hood.get_torque_current().value) 
+                    .position(self.hood.get_position().value)
+                    .velocity(self.hood.get_velocity().value), 
                 self
             )
         )

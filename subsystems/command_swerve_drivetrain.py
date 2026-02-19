@@ -244,13 +244,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
                     else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
                 )
                 self._has_applied_operator_perspective = True
-        
-        state1 = self.modules[0].get_current_state().angle.degrees()%180
-        target1 = self.modules[0].get_target_state().angle.degrees()
 
-
-        SmartDashboard.putNumber("Desired Angle", target1)
-        SmartDashboard.putNumber("State Angle", state1)
 
     def add_vision_measurement(self, vision_robot_pose: Pose2d, timestamp: units.second, vision_measurement_std_devs: tuple[float, float, float] | None = None):
         """

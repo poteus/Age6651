@@ -50,7 +50,8 @@ class Turret(commands2.Subsystem):
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Logic to apply voltage for SysId
-                lambda volts: self.motor.set_control(self.voltage_request.with_output(volts)),
+                lambda volts: ( self.motor.set_control(self.voltage_request.with_output(volts))
+                    if 0.05 < self.motor.get_position().value < 0.95 else self.motor.stopMotor() ), # Only apply voltage if we're within the soft limits, otherwise stop the motor
                 None, 
                 self
             )

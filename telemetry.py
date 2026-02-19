@@ -17,6 +17,11 @@ class Telemetry:
         # What to publish over networktables for telemetry
         self._inst = NetworkTableInstance.getDefault()
 
+        # Turret and Hood Telemetry
+        self._mechanism_table = self._inst.getTable("Mechanisms")
+        self._turret_abs_pub = self._mechanism_table.getDoubleTopic("TurretAbsRotation").publish()
+        self._hood_abs_pub = self._mechanism_table.getDoubleTopic("HoodAbsRotation").publish()
+
         # Robot swerve drive state
         self._drive_state_table = self._inst.getTable("DriveState")
         self._drive_pose = self._drive_state_table.getStructTopic("Pose", Pose2d).publish()
@@ -74,7 +79,7 @@ class Telemetry:
         for i, module_mechanism in enumerate(self._module_mechanisms):
             SmartDashboard.putData(f"Module {i}", module_mechanism)
 
-    def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
+    def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState, turret_rot: float = 0.0, hood_rot: float = 0.0):
         """
         Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger.
         """
@@ -106,3 +111,7 @@ class Telemetry:
             self._module_speeds[i].setAngle(module_state.angle.degrees())
             self._module_directions[i].setAngle(module_state.angle.degrees())
             self._module_speeds[i].setLength(module_state.speed / (2 * self._max_speed))
+
+        # Publish mechanism absolute positions
+        self._turret_abs_pub.set(turret_rot)
+        self._hood_abs_pub.set(hood_rot)

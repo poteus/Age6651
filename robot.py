@@ -44,7 +44,7 @@ class MyRobot(commands2.TimedCommandRobot):
         commands2.CommandScheduler.getInstance().run()
 
         # Update vision odometry
-        self.container.update_vision_odometry()
+        #self.container.update_vision_odometry()
 
     def disabledInit(self) -> None:
         """This function is called once each time the robot enters Disabled mode."""

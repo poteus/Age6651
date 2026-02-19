@@ -59,7 +59,6 @@ class RobotContainer:
             0.5
         )  # 3/4 of a rotation per second max angular velocity
 
-        print("With MOTION MAGIC.")
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
             swerve.requests.FieldCentric()
@@ -79,8 +78,17 @@ class RobotContainer:
 
         self.indexer = Indexer()
         self.shooter = Shooter()
-        # self.turret = Turret()
+        self.turret = Turret()
         self.drivetrain = TunerConstants.create_drivetrain()
+
+        # Register the telemetry callback to log swerve, turret, and hood data
+        self.drivetrain.register_telemetry(
+            lambda state: self._logger.telemeterize(
+                state, 
+                self.turret.motor.get_position().value, 
+                self.shooter.hood.get_position().value
+            )
+        )
 
         # Build the auto chooser and put it on the dashboard
         self.auto_chooser = AutoBuilder.buildAutoChooser()
@@ -98,88 +106,43 @@ class RobotContainer:
 
     def configureButtonBindings(self) -> None:
         # --- DRIVE LOCKDOWN ---
-        # Instead of joystick control, we force the drivetrain to stay in Brake mode.
-        # This prevents any accidental movement from the joysticks.
         self.drivetrain.setDefaultCommand(
             self.drivetrain.apply_request(lambda: swerve.requests.SwerveDriveBrake())
         )
 
-        # --- Indexer Characterization (SysId) ---
-        # Keep these active for your testing
-        # self._joystick.start().and_(self._joystick.y()).whileTrue(
-        #     self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kForward)
-        # )
-        # self._joystick.start().and_(self._joystick.x()).whileTrue(
-        #     self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kReverse)
-        # )
-        # self._joystick.start().and_(self._joystick.b()).whileTrue(
-        #     self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kForward)
-        # )
-        # self._joystick.start().and_(self._joystick.a()).whileTrue(
-        #     self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kReverse)
-        # )
-
-        self._joystick.rightTrigger().whileTrue(
-            # 1. Start the flywheel
-            commands2.cmd.run(
-                lambda: self.shooter.set_flywheel_rps(60),
-                self.shooter
-            )).onFalse(
-            # 3. Stop everything when trigger is released
-            commands2.cmd.runOnce(lambda: self.shooter.stop(), self.shooter)
-        )
-
-        self._joystick.leftTrigger().whileTrue((
-                # 2. Wait for flywheel to be fast enough, THEN run indexer
-                    commands2.cmd.run(
-                        lambda: self.indexer.set_velocity(80),
-                        self.indexer
-                    )
-            )
-        ).onFalse(
-            # 3. Stop everything when trigger is released
-            commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)
-        )
-
         # --- LOGGER CONTROL ---
-        # Press "Start" button to begin logging
-        # self._joystick.leftStick().onTrue(
-        #     commands2.cmd.runOnce(lambda: SignalLogger.start())
-        # )
-        # # We'll use the Back button for both stopping the logger AND resetting jams
-        # self._joystick.rightStick().onTrue(
-        #     commands2.cmd.runOnce(lambda: SignalLogger.stop())
-        # )
+        # Using Left Stick Click to Start and Right Stick Click to Stop
+        self._joystick.leftStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.start()))
+        self._joystick.rightStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.stop()))
 
-       # --- GLOBAL KILL SWITCH ---
-        # Pressing the 'Back' (View) button will cancel ALL running commands.
-        # This will immediately stop the Indexer and Drivetrain.
-        # self._joystick.back().onTrue(
-        #     commands2.cmd.runOnce(
-        #         lambda: commands2.CommandScheduler.getInstance().cancelAll()
-        #     ).ignoringDisable(True)
-        # )
+        # --- SHOOTER FLYWHEEL (Hold Right Bumper) ---
+        rb = self._joystick.rightBumper()
+        rb.and_(self._joystick.y()).whileTrue(self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kForward))
+        rb.and_(self._joystick.a()).whileTrue(self.shooter.sysIdFlywheelQuasistatic(SysIdRoutine.Direction.kReverse))
+        rb.and_(self._joystick.b()).whileTrue(self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kForward))
+        rb.and_(self._joystick.x()).whileTrue(self.shooter.sysIdFlywheelDynamic(SysIdRoutine.Direction.kReverse))
 
-    # Updates the pose from Vision subsystem
-    def update_vision_odometry(self):
-        #This sends the data of the pigeon to the limelight
-        #Gets the latest data of the pigeon
-        imu = self.drivetrain.pigeon2
-        yaw = imu.get_yaw().value
-        pitch = imu.get_pitch().value
-        roll = imu.get_roll().value
-        yaw_rate = imu.get_angular_velocity_z_world().value
-        #Pushes it to the limelight
-        self.vision.patch_limelight_orientation([yaw, yaw_rate, pitch, 0, roll, 0])
-        # Reads all available vision updates
-        vision_updates = self.vision.get_estimated_global_pose()
-        std_devs = (0.7, 0.7, 999999.0)  # Standard deviations for x, y, and theta
-        
-        # For each vision update, we pass it to the drivetrain for fusion
-        for pose, timestamp in vision_updates:
-            # We pass the vision pose and timestamp to the drivetrain
-            # This is where the Kalman Filter fusion happens
-            self.drivetrain.add_vision_measurement(pose, timestamp, std_devs)
+        # --- INDEXER (Hold Left Bumper) ---
+        lb = self._joystick.leftBumper()
+        lb.and_(self._joystick.y()).whileTrue(self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+        lb.and_(self._joystick.a()).whileTrue(self.indexer.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+        lb.and_(self._joystick.b()).whileTrue(self.indexer.sysIdDynamic(SysIdRoutine.Direction.kForward))
+        lb.and_(self._joystick.x()).whileTrue(self.indexer.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+
+        # --- TURRET (Hold Left Trigger) ---
+        lt = self._joystick.leftTrigger()
+        lt.and_(self._joystick.y()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+        lt.and_(self._joystick.a()).whileTrue(self.turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+        lt.and_(self._joystick.b()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kForward))
+        lt.and_(self._joystick.x()).whileTrue(self.turret.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+
+        # --- HOOD (Hold Right Trigger) ---
+        rt = self._joystick.rightTrigger()
+        rt.and_(self._joystick.y()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kForward))
+        rt.and_(self._joystick.a()).whileTrue(self.shooter.sysIdHoodQuasistatic(SysIdRoutine.Direction.kReverse))
+        rt.and_(self._joystick.b()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kForward))
+        rt.and_(self._joystick.x()).whileTrue(self.shooter.sysIdHoodDynamic(SysIdRoutine.Direction.kReverse))
+
 
         
     def getAutonomousCommand(self) -> commands2.Command:

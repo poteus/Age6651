@@ -74,33 +74,36 @@ class Indexer(commands2.Subsystem):
         self.front_encoder = self.front.getEncoder()
         self.back_encoder = self.back.getEncoder()
 
-        # 3. SysId Characterization Routine
+        # SysId Characterization Routine
         self.sys_id_routine = commands2.sysid.SysIdRoutine(
             commands2.sysid.SysIdRoutine.Config(
-                rampRate=1.0, # 1V per second
+                rampRate=1.0,         # 1V per second
                 stepVoltage=7.0,      # 7V for dynamic test
-                timeout=seconds(50)
+                timeout=seconds(10)   
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Drive both motors at the same voltage
                 lambda volts: (
-                    self.front.setVoltage(volts),
-                    self.back.setVoltage(volts)
-                ),
-                # Log BOTH motors as separate "log.motor" entries
-                lambda log: (
-                    log.motor("front-rollers")
-                        .voltage(self.front.getAppliedOutput() * self.front.getBusVoltage())
-                        .position(self.front.getEncoder().getPosition())
-                        .velocity(self.front.getEncoder().getVelocity()),
-                    log.motor("back-rollers")
-                        .voltage(self.back.getAppliedOutput() * self.back.getBusVoltage())
-                        .position(self.back.getEncoder().getPosition())
-                        .velocity(self.back.getEncoder().getVelocity())
-                ),
-                self
+                    self.run_indexer_voltage(volts),
+                    self.log_indexer(log),
+                    self
+                )
             )
         )
+
+    def run_indexer_voltage(self, volts):
+        self.front.setVoltage(volts)
+        self.back.setVoltage(volts)
+
+    def log_indexer(self, log):
+        log.motor("front") \
+        .voltage(self.front.getAppliedOutput() * self.front.getBusVoltage()) \
+        .position(self.front_encoder.getPosition()) \
+        .velocity(self.front_encoder.getVelocity())
+        log.motor("back") \
+        .voltage(self.back.getAppliedOutput() * self.back.getBusVoltage()) \
+        .position(self.back_encoder.getPosition()) \
+        .velocity(self.back_encoder.getVelocity())
 
     def set_velocity(self, rps: float):
         """Sets the indexer speed in Revolutions per Second."""
