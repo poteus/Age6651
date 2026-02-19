@@ -38,10 +38,10 @@ class Shooter(commands2.Subsystem):
         fw_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
         fw_cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST
 
-        fw_cfg.slot0.k_s = 16.494  # Amps
-        fw_cfg.slot0.k_v = 0.26707  # Amps per RPS
-        fw_cfg.slot0.k_a = 0.68816  # Amps per RPS^2
-        fw_cfg.slot0.k_p = 1.0869   # Amps per Error(RPS)
+        fw_cfg.slot0.k_s = 9.0554  # Amps
+        fw_cfg.slot0.k_v = 0.081473  # Amps per RPS
+        fw_cfg.slot0.k_a = 0.55985  # Amps per RPS^2
+        fw_cfg.slot0.k_p = 0.14981 # 1.0869   # Amps per Error(RPS)
         fw_cfg.slot0.k_i = 0.0
         fw_cfg.slot0.k_d = 0.0
         

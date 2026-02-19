@@ -1,6 +1,7 @@
 import commands2
 import commands2.sysid
-from phoenix6 import hardware, configs, signals, controls
+from phoenix6 import SignalLogger, hardware, configs, signals, controls
+from wpilib.sysid import SysIdRoutineLog
 from wpilib import SmartDashboard
 from wpimath.units import seconds
 
@@ -46,13 +47,17 @@ class Turret(commands2.Subsystem):
             commands2.sysid.SysIdRoutine.Config(
                 rampRate=1.0,
                 stepVoltage=7.0,
-                timeout=seconds(10)
+                timeout=seconds(10),
+                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Logic to apply voltage for SysId
-                lambda volts: ( self.motor.set_control(self.voltage_request.with_output(volts))
-                    if 0.05 < self.motor.get_position().value < 0.95 else self.motor.stopMotor() ), # Only apply voltage if we're within the soft limits, otherwise stop the motor
-                None, 
+                lambda volts: self.motor.set_control(self.voltage_request.with_output(volts)),
+                    #if 0.05 < self.motor.get_position().value < 0.95 else self.motor.stopMotor() ), # Only apply voltage if we're within the soft limits, otherwise stop the motor
+                lambda log: log.motor("turret")
+                    .voltage(self.motor.get_motor_voltage().value) 
+                    .position(self.motor.get_position().value)
+                    .velocity(self.motor.get_velocity().value),
                 self
             )
         )
