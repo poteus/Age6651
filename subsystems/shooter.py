@@ -18,34 +18,17 @@ class Shooter(commands2.Subsystem):
     def __init__(self):
         super().__init__()
 
-        # Init network table for speed of indexer
-        nt = NetworkTableInstance.getDefault()
-        table = nt.getTable("SmartDashboard")
-
-        # Create a Topic and a Subscriber
-        # This creates the "box" on the dashboard. Defaulting to 0.0 RPS.
-        self.velocity_topic = table.getDoubleTopic("Shooter/ShooterTargetRPS")
-        self.velocity_pub = self.velocity_topic.publish()
-        self.velocity_pub.set(0.0)
-        self.velocity_sub = self.velocity_topic.subscribe(0.0)
-
-        self.position_topic = table.getDoubleTopic("Shooter/HoodEncoder")
-        self.position_pub = self.position_topic.publish()
-        
-        # We also want to publish the ACTUAL speed so we can compare them
-        self.actual_pub = table.getDoubleTopic("Shooter/ShooterActualRPS").publish()
-
         # Flywheel Setup (Kraken X60 - CAN ID 16) ---
         self.flywheel = hardware.TalonFX(16)
         fw_cfg = configs.TalonFXConfiguration()
 
-        fw_cfg.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        fw_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
         fw_cfg.motor_output.neutral_mode = signals.NeutralModeValue.COAST
 
-        fw_cfg.slot0.k_s = 16.494  # Amps
-        fw_cfg.slot0.k_v = 0.26707  # Amps per RPS
-        fw_cfg.slot0.k_a = 0.68816  # Amps per RPS^2
-        fw_cfg.slot0.k_p = 1.0869   # Amps per Error(RPS)
+        fw_cfg.slot0.k_s = 9.0554  # Amps
+        fw_cfg.slot0.k_v = 0.081473  # Amps per RPS
+        fw_cfg.slot0.k_a = 0.55985  # Amps per RPS^2
+        fw_cfg.slot0.k_p = 0.14981 # 1.0869   # Amps per Error(RPS)
         fw_cfg.slot0.k_i = 0.0
         fw_cfg.slot0.k_d = 0.0
         
@@ -98,21 +81,61 @@ class Shooter(commands2.Subsystem):
         # SysId still uses Voltage for standard characterization
         self.voltage_request = controls.VoltageOut(0)
 
+        # --- Data Points for Tuning ---
+        # Format: (Distance in Meters, Flywheel RPS, Hood Rotations)
+        self.tuning_table = [
+            (1.0, 50.0, 0.006), # Close
+            (2.5, 75.0, 0.050), # Mid
+            (5.0, 95.0, 0.117)  # Far
+        ]
+        
     # --- Methods ---
     def set_flywheel_rps(self, rps: float):
         """Sets flywheel speed using Torque-Current FOC."""
         self.flywheel.set_control(self.fw_torque_request_vel.with_velocity(rps))
 
-    # def set_hood_position(self, rotations: float):
-    #     """Sets hood position using Motion Magic Torque-Current FOC."""
-    #     self.hood.set_control(self.hood_torque_request.with_position(rotations))
+    def set_hood_position(self, rotations: float):
+        """Sets hood position using Motion Magic Torque-Current FOC."""
+        self.hood.set_control(self.hood_torque_request.with_position(rotations))
 
     def stop(self):
         self.flywheel.stopMotor()
-        # self.hood.stopMotor()
 
-    def periodic(self):
-        # Tracking torque (current) output is useful for debugging
-        SmartDashboard.putNumber("Shooter/Flywheel Torque (Amps)", self.flywheel.get_torque_current().value)
-        SmartDashboard.putNumber("Shooter/Flywheel RPS", self.flywheel.get_velocity().value)
-        SmartDashboard.putNumber("Shooter/HoodEncoder", self.hood.get_position().value)
+    def reset_hood_position(self):
+        """Manually reset the hood encoder to 0. Call this when hood is at 'home'."""
+        self.hood.set_position(0)
+
+    def interpolate(self, x, x1, y1, x2, y2):
+        """Standard linear interpolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)"""
+        return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
+    
+    def get_values_for_distance(self, distance_meters: float):
+        """Finds the two closest points in the table and calculates the RPS and Hood position."""
+        # Sort table by distance just in case
+        table = sorted(self.tuning_table)
+        
+        # If too close, return the first point
+        if distance_meters <= table[0][0]:
+            return table[0][1], table[0][2]
+        
+        # If too far, return the last point
+        if distance_meters >= table[-1][0]:
+            return table[-1][1], table[-1][2]
+
+        # Find the two points to interpolate between
+        for i in range(len(table) - 1):
+            d1, rps1, hood1 = table[i]
+            d2, rps2, hood2 = table[i+1]
+            
+            if d1 <= distance_meters <= d2:
+                interp_rps = self.interpolate(distance_meters, d1, rps1, d2, rps2)
+                interp_hood = self.interpolate(distance_meters, d1, hood1, d2, hood2)
+                return interp_rps, interp_hood
+        
+        return 60.0, 0.0  # Safe default
+    
+    def aim_at_distance(self, distance_meters: float):
+        ''' Sets speed and hood position based on distance using interpolation from the tuning table. '''
+        rps, hood_pos = self.get_values_for_distance(distance_meters)
+        self.set_flywheel_rps(rps)
+        self.set_hood_position(hood_pos)
