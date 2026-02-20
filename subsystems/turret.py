@@ -48,19 +48,25 @@ class Turret(commands2.Subsystem):
                 rampRate=1.0,
                 stepVoltage=7.0,
                 timeout=seconds(10),
-                recordState=lambda state: SignalLogger.write_string("state", SysIdRoutineLog.stateEnumToString(state))
+                recordState=lambda state: SignalLogger.write_string(
+                    "SysIdTurret_State", 
+                    SysIdRoutineLog.stateEnumToString(state))
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Logic to apply voltage for SysId
                 lambda volts: self.motor.set_control(self.voltage_request.with_output(volts)),
                     #if 0.05 < self.motor.get_position().value < 0.95 else self.motor.stopMotor() ), # Only apply voltage if we're within the soft limits, otherwise stop the motor
-                lambda log: log.motor("turret")
-                    .voltage(self.motor.get_motor_voltage().value) 
-                    .position(self.motor.get_position().value)
-                    .velocity(self.motor.get_velocity().value),
+                self.log_turret,
                 self
             )
         )
+
+    def log_turret(self, log):
+        """Helper to log motor data for SysId"""
+        log.motor("turret") \
+            .voltage(self.motor.get_motor_voltage().value) \
+            .position(self.motor.get_position().value) \
+            .velocity(self.motor.get_velocity().value)
 
     def set_position(self, rotations: float):
         """Sets turret position (0.0 to 1.0 represents 0 to 360 degrees)"""
