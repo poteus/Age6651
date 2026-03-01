@@ -71,10 +71,10 @@ class Shooter(commands2.Subsystem):
         hood_cfg.slot0.k_d = 0.0
 
         # Soft Limits
-        hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.117 
-        hood_cfg.software_limit_switch.forward_soft_limit_enable = True
-        hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.006
-        hood_cfg.software_limit_switch.reverse_soft_limit_enable = True
+        # hood_cfg.software_limit_switch.forward_soft_limit_threshold = 0.117 
+        # hood_cfg.software_limit_switch.forward_soft_limit_enable = True
+        # hood_cfg.software_limit_switch.reverse_soft_limit_threshold = 0.006
+        # hood_cfg.software_limit_switch.reverse_soft_limit_enable = True
         
         # Motion Magic Settings
         hood_cfg.motion_magic.motion_magic_cruise_velocity = 0.5 

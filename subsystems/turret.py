@@ -25,10 +25,10 @@ class Turret(commands2.Subsystem):
         
         # Soft Limits: Prevent rotating past 360 degrees (0.0 to 1.0 rotations)
         # This protects cables!
-        cfg.software_limit_switch.forward_soft_limit_threshold = 1.0 # 360 degrees
-        cfg.software_limit_switch.forward_soft_limit_enable = True
-        cfg.software_limit_switch.reverse_soft_limit_threshold = 0.0 # 0 degrees
-        cfg.software_limit_switch.reverse_soft_limit_enable = True
+        # cfg.software_limit_switch.forward_soft_limit_threshold = 1.0 # 360 degrees
+        # cfg.software_limit_switch.forward_soft_limit_enable = True
+        # cfg.software_limit_switch.reverse_soft_limit_threshold = 0.0 # 0 degrees
+        # cfg.software_limit_switch.reverse_soft_limit_enable = True
 
         # PID Settings for Position Control
         cfg.slot0.k_p = 12.0 # Placeholder: start low and tune
@@ -45,12 +45,10 @@ class Turret(commands2.Subsystem):
         # SysId Characterization Routine
         self.sys_id_routine = commands2.sysid.SysIdRoutine(
             commands2.sysid.SysIdRoutine.Config(
-                rampRate=1.0,
-                stepVoltage=7.0,
+                rampRate=0.20,
+                stepVoltage=1.0,
                 timeout=seconds(10),
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdTurret_State", 
-                    SysIdRoutineLog.stateEnumToString(state))
+                recordState=lambda state: SignalLogger.write_string("SysIdTurret_State", SysIdRoutineLog.stateEnumToString(state))
             ),
             commands2.sysid.SysIdRoutine.Mechanism(
                 # Logic to apply voltage for SysId
