@@ -57,7 +57,7 @@ class Shooter(commands2.Subsystem):
         self.hood = hardware.TalonFX(17)
         hood_cfg = configs.TalonFXConfiguration()
 
-        hood_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        hood_cfg.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
         hood_cfg.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         
         hood_cfg.feedback.sensor_to_mechanism_ratio = self.HOOD_GEAR_RATIO
