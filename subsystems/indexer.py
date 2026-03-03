@@ -11,6 +11,7 @@ class Indexer(commands2.Subsystem):
     '''
     The indexer subsystem funnels the fuel from wherever we store fuel all the way to the shooter
     '''
+    last_indexer_rps = -1.0
 
     def __init__(self):
         super().__init__()
@@ -93,6 +94,29 @@ class Indexer(commands2.Subsystem):
     def stop(self):
         self.front.stopMotor()
         self.back.stopMotor()
+
+    def indexer_control_rps(self):
+        ''' Activates the indexer control using the RPS value from the dashboard,
+            applying changes only when the target or the shooter readiness changes. '''
+        
+        # Get the current desired speed from the dashboard/subscriber
+        target_rps = self.velocity_sub.get()
+
+        # Check if the shooter is actually ready
+        is_ready = self.shooter.reach_rps() and self.shooter.reach_hood_position()
+
+        if is_ready:
+            # Only send the CAN frame if the target has actually changed
+            # OR if we were previously stopped and now we are starting
+            if target_rps != self.last_indexer_rps:
+                self.set_velocity(target_rps)
+                self.last_indexer_rps = target_rps
+        else:
+            # If the shooter isn't ready, we MUST stop.
+            # We check if last_indexer_rps != 0 so we don't spam 'stop' repeatedly.
+            if self.last_indexer_rps != 0:
+                self.stop()
+                self.last_indexer_rps = 0
 
     # def periodic(self):
     #     # Log data for debugging

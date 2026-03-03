@@ -14,6 +14,8 @@ class Shooter(commands2.Subsystem):
 
     # 5:1 (Gearbox) * (120/10) (Gears) = 60:1
     HOOD_GEAR_RATIO = 60.0
+    last_rps = -1.0
+    last_hood_rot = -1.0
     
     def __init__(self):
         super().__init__()
@@ -138,3 +140,36 @@ class Shooter(commands2.Subsystem):
         rps, hood_pos = self.get_values_for_distance(distance_meters)
         self.set_flywheel_rps(rps)
         self.set_hood_position(hood_pos)
+
+    def shoot_control_dash(self):
+        ''' Read the speed and the angle to shoot from the dashboard and apply them.
+        Sets the setpoint of both the flywheel and the hood based on the values from the dashboard.
+        Once it has been set, it waits until any of the two values change before updating again. '''
+        current_rps = SmartDashboard.getNumber("Shooter Speed", 0.0)
+        current_hood_rot = SmartDashboard.getNumber("Hood Position", 0.0)
+        if current_rps != self.last_rps:
+            self.set_flywheel_rps(current_rps)
+            self.last_rps = current_rps
+        if current_hood_rot != self.last_hood_rot:
+            self.set_hood_position(current_hood_rot)
+            self.last_hood_rot = current_hood_rot
+    
+    def stop_shooter_indexer(self):
+        ''' Stops both the shooter and indexer motors. '''
+        self.stop()
+
+    def actual_rps(self):
+        ''' Returns the actual RPS of the flywheel based on the encoder velocity. '''
+        return self.flywheel.get_velocity().refresh().value
+    
+    def actual_hood_position(self):
+        ''' Returns the actual position of the hood in rotations based on the encoder position. '''
+        return self.hood.get_position().refresh().value
+
+    def reach_rps(self, tolerance: float = 3.0):
+        ''' Returns True if the flywheel is within the specified tolerance of the target RPS. '''
+        return abs(self.actual_rps() - self.last_rps) < tolerance
+
+    def reach_hood_position(self, tolerance: float = 0.01):
+        ''' Returns True if the hood is within the specified tolerance of the target position. '''
+        return abs(self.actual_hood_position() - self.last_hood_rot) < tolerance

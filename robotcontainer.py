@@ -144,10 +144,12 @@ class RobotContainer:
         )
 
         self._joystick.rightTrigger().whileTrue(
-            commands2.cmd.run(
-                lambda: self.shooter.set_flywheel_rps(SmartDashboard.getNumber("Shooter Speed", 0.0)))  # Placeholder RPS value for shooting
-        ).onFalse(commands2.cmd.run(
-                lambda:self.shooter.stop()))
+            commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
+                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
+        ).onFalse(commands2.cmd.runOnce(
+                lambda:self.shooter.stop(), self.shooter).alongWith(
+                commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)))
+            
 
         self._joystick.leftTrigger().whileTrue(
             commands2.cmd.run(
