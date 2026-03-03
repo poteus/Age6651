@@ -156,17 +156,17 @@ class RobotContainer:
                 lambda: self.indexer.stop()))
 
 
-        self._joystick.leftBumber().whileTrue(
+        self._joystick.leftBumper().whileTrue(
             commands2.cmd.run(
                 lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
         ).onFalse(commands2.cmd.run(lambda: self.intake.stop()
         ))
 
-        self._joystick.dpadUp().whileTrue(
+        self._joystick.povUp().whileTrue(
             commands2.cmd.run(lambda: self.shoulder.set_position(0))  # Placeholder position for "up"
         )
 
-        self._joystick.dpadDown().whileTrue(
+        self._joystick.povDown().whileTrue(
             commands2.cmd.run(lambda: self.shoulder.set_position(180))  # Placeholder position for "down"
         )
 
