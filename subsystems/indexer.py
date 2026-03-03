@@ -36,37 +36,43 @@ class Indexer(commands2.Subsystem):
         # Create Configuration
         # We set the conversion factor to 1/60 to turn RPM into RPS
         # Velocity = (RPM / 60) = Revolutions per Second
+        # Set the Idle Mode to Coast
+   
         config50 = SparkMaxConfig()
         
         config50.encoder.velocityConversionFactor(1.0 / 60.0) 
         config50.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config50.inverted(True)
+        config50.inverted(False)
+        config50.IdleMode(SparkMaxConfig.IdleMode.kCoast)
       
         # Set PID Gains (Placeholder values - update after tuning)
         # kS = 0.14395
         # kV = 0.12408
         # kA = 0.012706
         #kP = 0.050463
-        config50.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.12408) # kV
+        config50.closedLoop.P(0.0001).I(0).D(0.00005).velocityFF(0.12408) # kV
+        config50.closedLoop.feedForward.kS(0.14395)
         
         # Velocity = (RPM / 60) = Revolutions per Second
         config51 = SparkMaxConfig()
         
-        config51.encoder.velocityConversionFactor(1.0 / 60.0) 
+        config51.encoder.velocityConversionFactor(1.0)# / 60.0) 
         config51.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        config51.inverted(False)
+        config51.inverted(True)
+        config51.IdleMode(SparkMaxConfig.IdleMode.kCoast)
 
         # Set PID Gains (Placeholder values - update after tuning)
         # kS = 0.47088
         # kV = 0.13267
         # kA = 0.0068033
         #kP = 0.00026339
-        config51.closedLoop.P(0.0001).I(0).D(0).velocityFF(0.13267)
+        config51.closedLoop.P(0.0001).I(0).D(0.00005).velocityFF(0.13267)
+        config51.closedLoop.feedForward.kS(0.47088)
         
         # Apply configuration to both motors
         self.front.configure(
             config50,
-            ResetMode.kResetSafeParameters, 
+             ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
         self.back.configure(
             config51, 
@@ -88,16 +94,16 @@ class Indexer(commands2.Subsystem):
         self.front.stopMotor()
         self.back.stopMotor()
 
-    def periodic(self):
-        # Log data for debugging
-        SmartDashboard.putNumber("Indexer/Velocity RPS", self.front_encoder.getVelocity())
-        SmartDashboard.putNumber("Indexer/Applied Output", self.front.getAppliedOutput())
-         # Read the value from the Dashboard
-        target_rps = self.velocity_sub.get()
+    # def periodic(self):
+    #     # Log data for debugging
+    #     SmartDashboard.putNumber("Indexer/Velocity RPS", self.front_encoder.getVelocity())
+    #     SmartDashboard.putNumber("Indexer/Applied Output", self.front.getAppliedOutput())
+    #      # Read the value from the Dashboard
+    #     # target_rps = self.velocity_sub.get()
             
-        # Apply the speed (only if you want it constantly running for testing)
-        # In a real match, you'd use a command, but for bench testing this works:
-        # self.set_velocity(target_rps)
+    #     # Apply the speed (only if you want it constantly running for testing)
+    #     # In a real match, you'd use a command, but for bench testing this works:
+    #     # self.set_velocity(target_rps)
 
-        # Publish the actual velocity for the graph
-        self.actual_pub.set(self.front_encoder.getVelocity())
+    #     # Publish the actual velocity for the graph
+    #     self.actual_pub.set(self.front_encoder.getVelocity())

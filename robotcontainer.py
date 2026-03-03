@@ -19,7 +19,7 @@ from subsystems.shooter import Shooter
 from subsystems.turret import Turret
 
 import wpilib
-from wpilib import DriverStation
+from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
@@ -52,7 +52,7 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
         self.indexer = Indexer()
         self.shooter = Shooter()
-        self.turret = Turret()
+        #self.turret = Turret()
 
         # Constants
         self._max_speed = (
@@ -143,14 +143,37 @@ class RobotContainer:
             self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
         )
 
-        # Start and stop SignalLogger with the bumpers
-        self._joystick.leftBumper().onTrue(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.start()))
-        
-        self._joystick.rightBumper().onFalse(
-             commands2.cmd.runOnce(
-                lambda: SignalLogger.stop()))
+        self._joystick.rightTrigger().whileTrue(
+            commands2.cmd.run(
+                lambda: self.shooter.set_flywheel_rps(SmartDashboard.getNumber("Shooter Speed", 0.0)))  # Placeholder RPS value for shooting
+        ).onFalse(commands2.cmd.run(
+                lambda:self.shooter.stop()))
+
+        self._joystick.leftTrigger().whileTrue(
+            commands2.cmd.run(
+                lambda: self.indexer.set_velocity(40.0))  # Placeholder RPS value for indexing
+        ).onFalse(commands2.cmd.run(
+                lambda: self.indexer.stop()))
+
+
+        self._joystick.leftBumber().whileTrue(
+            commands2.cmd.run(
+                lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
+        ).onFalse(commands2.cmd.run(lambda: self.intake.stop()
+        ))
+
+        self._joystick.dpadUp().whileTrue(
+            commands2.cmd.run(lambda: self.shoulder.set_position(0))  # Placeholder position for "up"
+        )
+
+        self._joystick.dpadDown().whileTrue(
+            commands2.cmd.run(lambda: self.shoulder.set_position(180))  # Placeholder position for "down"
+        )
+
+        # --- LOGGER CONTROL ---
+        # Using Left Stick Click to Start and Right Stick Click to Stop
+        self._joystick.leftStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.start()))
+        self._joystick.rightStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.stop()))
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)

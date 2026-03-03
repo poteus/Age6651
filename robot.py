@@ -10,6 +10,7 @@ import commands2
 import typing
 
 from robotcontainer import RobotContainer
+from wpilib import SmartDashboard
 
 
 class MyRobot(commands2.TimedCommandRobot):
@@ -28,6 +29,7 @@ class MyRobot(commands2.TimedCommandRobot):
 
         # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         # autonomous chooser on the dashboard.
+        SmartDashboard.putNumber("Shooter Speed", 0.0)
         self.container = RobotContainer()
 
     def robotPeriodic(self) -> None:

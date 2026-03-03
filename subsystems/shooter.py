@@ -28,7 +28,7 @@ class Shooter(commands2.Subsystem):
         fw_cfg.slot0.k_s = 9.0554  # Amps
         fw_cfg.slot0.k_v = 0.081473  # Amps per RPS
         fw_cfg.slot0.k_a = 0.55985  # Amps per RPS^2
-        fw_cfg.slot0.k_p = 0.14981 # 1.0869   # Amps per Error(RPS)
+        fw_cfg.slot0.k_p = 10 # 0.14981 # 1.0869   # Amps per Error(RPS)
         fw_cfg.slot0.k_i = 0.0
         fw_cfg.slot0.k_d = 0.0
         
@@ -84,9 +84,8 @@ class Shooter(commands2.Subsystem):
         # --- Data Points for Tuning ---
         # Format: (Distance in Meters, Flywheel RPS, Hood Rotations)
         self.tuning_table = [
-            (1.0, 50.0, 0.006), # Close
-            (2.5, 75.0, 0.050), # Mid
-            (5.0, 95.0, 0.117)  # Far
+            (1.0, 50.0, 0.00), # Close
+            (2, 55.0, 0.023)
         ]
         
     # --- Methods ---
