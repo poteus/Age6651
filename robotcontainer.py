@@ -17,6 +17,7 @@ from subsystems.vision import Vision
 from subsystems.indexer import Indexer
 from subsystems.shooter import Shooter
 from subsystems.turret import Turret
+from subsystems.intake import Intake
 
 import wpilib
 from wpilib import DriverStation, SmartDashboard
@@ -50,8 +51,10 @@ class RobotContainer:
 
         # Subsystems
         self.drivetrain = TunerConstants.create_drivetrain()
-        self.indexer = Indexer()
         self.shooter = Shooter()
+        self.indexer = Indexer(self.shooter)
+        self.intake = Intake()
+        
         #self.turret = Turret()
 
         # Constants
@@ -154,7 +157,7 @@ class RobotContainer:
         self._joystick.leftTrigger().whileTrue(
             commands2.cmd.run(
                 lambda: self.indexer.set_velocity(40.0))  # Placeholder RPS value for indexing
-        ).onFalse(commands2.cmd.run(
+        ).onFalse(commands2.cmd.runOnce(
                 lambda: self.indexer.stop()))
 
 
@@ -165,11 +168,11 @@ class RobotContainer:
         ))
 
         self._joystick.povUp().whileTrue(
-            commands2.cmd.run(lambda: self.shoulder.set_position(0))  # Placeholder position for "up"
+            commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
         )
 
         self._joystick.povDown().whileTrue(
-            commands2.cmd.run(lambda: self.shoulder.set_position(180))  # Placeholder position for "down"
+            commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(180))  # Placeholder position for "down"
         )
 
         # --- LOGGER CONTROL ---

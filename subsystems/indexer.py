@@ -13,8 +13,10 @@ class Indexer(commands2.Subsystem):
     '''
     last_indexer_rps = -1.0
 
-    def __init__(self):
+    def __init__(self, shooter):
         super().__init__()
+
+        self.shooter = shooter
 
         # Init network table for speed of indexer
         nt = NetworkTableInstance.getDefault()
@@ -94,6 +96,7 @@ class Indexer(commands2.Subsystem):
     def stop(self):
         self.front.stopMotor()
         self.back.stopMotor()
+        self.last_indexer_rps = 0
 
     def indexer_control_rps(self):
         ''' Activates the indexer control using the RPS value from the dashboard,

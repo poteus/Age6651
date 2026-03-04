@@ -13,6 +13,8 @@ class Intake(commands2.Subsystem):
     The intake subsystem controls the intake of fuel
     '''
 
+    last_hood_position = -1.0
+
     def __init__(self):
         super().__init__()
 
@@ -94,6 +96,16 @@ class Intake(commands2.Subsystem):
         self.intake_loop.setReference(rps, SparkMax.ControlType.kVelocity)
         shoulder_target = rps * (7.0 / 5.0)
         self.shoulder_loop.setReference(shoulder_target, SparkMax.ControlType.kVelocity)
+
+    def hood_control_dash(self):
+        ''' Reads the desired shoulder position from the dashboard and sets it. '''
+        target_position = self.shoulder_position_sub.get()
+
+        if target_position == self.last_hood_position:
+            return
+        
+        self.set_shoulder_position(target_position)
+        self.last_hood_position = target_position
 
     def stop(self):
         self.intake.stopMotor()

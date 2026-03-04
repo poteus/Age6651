@@ -101,6 +101,7 @@ class Shooter(commands2.Subsystem):
 
     def stop(self):
         self.flywheel.stopMotor()
+        self.last_rps = -1.0
 
     def reset_hood_position(self):
         """Manually reset the hood encoder to 0. Call this when hood is at 'home'."""
@@ -153,10 +154,6 @@ class Shooter(commands2.Subsystem):
         if current_hood_rot != self.last_hood_rot:
             self.set_hood_position(current_hood_rot)
             self.last_hood_rot = current_hood_rot
-    
-    def stop_shooter_indexer(self):
-        ''' Stops both the shooter and indexer motors. '''
-        self.stop()
 
     def actual_rps(self):
         ''' Returns the actual RPS of the flywheel based on the encoder velocity. '''
