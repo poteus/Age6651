@@ -1,41 +1,21 @@
 import commands2
-import commands2.sysid
-from phoenix5 import TalonSRX, TalonSRXConfiguration
+
+from phoenix5 import ControlMode, TalonSRX, NeutralMode
 from rev import SparkMax, SparkLowLevel, SparkMaxConfig, ResetMode, PersistMode
-
-from wpilib import SmartDashboard
-from wpimath.units import seconds
-
-from ntcore import NetworkTableInstance
-
+import rev
 class Intake(commands2.Subsystem):
     '''
     The intake subsystem controls the intake of fuel
     '''
 
-    last_hood_position = -1.0
-
     def __init__(self):
         super().__init__()
-
-        # Init network table for speed of indexer
-        nt = NetworkTableInstance.getDefault()
-        table = nt.getTable("SmartDashboard")
-        # Create a Topic and a Subscriber
-        # This creates the "box" on the dashboard. Defaulting to 0.0 RPS.
-        self.shoulder_position_topic = table.getDoubleTopic("Shoulder Position")
-        self.shoulder_position_pub = self.shoulder_position_topic.publish()
-        self.shoulder_position_pub.set(0.0)
-        self.shoulder_position_sub = self.shoulder_position_topic.subscribe(0.0)
-
-        # We also want to publish the ACTUAL speed so we can compare them
-        self.actual_pub = table.getDoubleTopic("Shoulder Position").publish()
 
         # Shoulder and intake motors CHECK THESE
         self.intake = TalonSRX(510)
         self.shoulder = SparkMax(500, SparkLowLevel.MotorType.kBrushless)
 
-        # Create Configurations for both intake and sholder
+        # Create Configurations for both intake and shoulder
 
         # Intake Configuration -----------------------------------
         # Factory Default to ensure no old settings interfere
@@ -56,57 +36,113 @@ class Intake(commands2.Subsystem):
         # Intake Configuration -----------------------------------
 
         # Shoulder Configuration -----------------------------------
-        # We set the conversion factor to 1/60 to turn RPM into RPS
-        # Velocity = (RPM / 60) = Revolutions per Second
-        shoulder_config = SparkMaxConfig()
+        self.shoulder_config = SparkMaxConfig()
+        self.shoulder_config.inverted(True)
+
+        # Gearbox is 92.5:1. 
+        # Position factor: 1 / 92.5 (Output rotations per motor rotation)
+        # Velocity factor: 1 / 92.5 (Output RPM per motor RPM)
+        self.shoulder_config.encoder.positionConversionFactor(1.0 / 92.5)
+        self.shoulder_config.encoder.velocityConversionFactor(1.0 / 92.5)
+
+        # --- Limit Switch Setup ---
+        # 0 Degrees (Inside) is Reverse, 90 Degrees (Bumper) is Forward
+        self.shoulder_config.limitSwitch.reverseLimitSwitchEnabled(True)
+        self.shoulder_config.limitSwitch.reverseLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyOpen)
         
-        shoulder_config.encoder.velocityConversionFactor(1.0)# / 60.0)
-        shoulder_config.encoder.positionConversionFactor(1.0) # 1 rotation = 1 unit
-        shoulder_config.inverted(True)
-        shoulder_config.IdleMode(SparkMaxConfig.IdleMode.kCoast)
+        # When reverse limit switch is reached, it stops the motors and set encoder position to 0.
+        self.shoulder_config.limitSwitch.reverseLimitSwitchBehavior( # type: ignore
+            rev.LimitSwitchConfig.Behavior.kStopMovingMotorAndSetPosition
+        )
+        self.shoulder_config.limitSwitch.reverseLimitSwitchPosition(0.0)
+        
+        self.shoulder_config.limitSwitch.forwardLimitSwitchEnabled(True)
+        self.shoulder_config.limitSwitch.forwardLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyOpen)
+
+        # Soft Limits act as a "virtual" wall before the physical switch
+        # If your 90 deg switch is at 0.25 rotations, set soft limit to 0.24
+        self.shoulder_config.softLimit.forwardSoftLimit(0.24)
+        self.shoulder_config.softLimit.forwardSoftLimitEnabled(True)
+        
+        self.shoulder_config.softLimit.reverseSoftLimit(0.01)
+        self.shoulder_config.softLimit.reverseSoftLimitEnabled(True)
 
         # Set PID Gains (Placeholder values - update after tuning)
         # kS = 0.47088
         # kV = 0.13267
         # kA = 0.0068033
-        #kP = 0.00026339
-        shoulder_config.closedLoop.P(0.0001).I(0).D(0.00005).velocityFF(0.13267)
-        shoulder_config.closedLoop.feedForward.kS(0.47088)
-        
-        # Apply configuration to both motors
+        # kP = 0.00026339
+        self.shoulder_config.closedLoop.P(0.0001).I(0).D(0.00005).velocityFF(0.13267)
+        self.shoulder_config.closedLoop.feedForward.kS(0.47088)
+
+        # Config object for Braking mode
+        self.brake_config = SparkMaxConfig()
+        self.brake_config.apply(self.shoulder_config) # Copy all master settings
+        self.brake_config.IdleMode(SparkMaxConfig.IdleMode.kBrake)
+
+        #Config object for Coasting mode
+        self.coast_config = SparkMaxConfig()
+        self.coast_config.apply(self.shoulder_config) # Copy all master settings
+        self.coast_config.IdleMode(SparkMaxConfig.IdleMode.kCoast)
+
+        # Apply configuration to TalonSRX
         self.shoulder.configure(
-            shoulder_config, 
+            self.brake_config, 
             ResetMode.kResetSafeParameters, 
-            PersistMode.kPersistParameters)
+            PersistMode.kNoPersistParameters)
+        
+        self.is_braking = True
+
         # Shoulder Configuration -----------------------------------
 
         self.shoulder_loop = self.shoulder.getClosedLoopController()
         self.shoulder_encoder = self.shoulder.getEncoder()
 
-        # written by dan and chris - not tested yet 🤪😎
         
     def set_shoulder_position(self, rotations: float):
+        ''' Set the shoulder to a specific position in rotations. 0 rotations is the "home" position, and positive rotations are clockwise.
+        '''
         self.shoulder_loop.setReference(rotations, SparkMax.ControlType.kPosition)
 
-    def set_intake_velocity(self, rps: float):
-        self.intake.setVoltage(rps * 12.0 / 40.0) # Placeholder conversion from RPS to voltage
-
-    def set_velocity(self, rps: float):
-        """Sets the intake speed in Revolutions per Second."""
-        self.intake_loop.setReference(rps, SparkMax.ControlType.kVelocity)
-        shoulder_target = rps * (7.0 / 5.0)
-        self.shoulder_loop.setReference(shoulder_target, SparkMax.ControlType.kVelocity)
-
-    def hood_control_dash(self):
-        ''' Reads the desired shoulder position from the dashboard and sets it. '''
-        target_position = self.shoulder_position_sub.get()
-
-        if target_position == self.last_hood_position:
-            return
-        
-        self.set_shoulder_position(target_position)
-        self.last_hood_position = target_position
+    def set_intake_dutyCycle(self, DC: float):
+        '''Set the DutyCycle for the Intake Motor. DC should be between -1.0 and 1.0, where 1.0 is full forward and -1.0 is full reverse.
+        '''
+        if DC > 1.0:
+            DC = 1.0
+        elif DC < -1.0:
+            DC = -1.0
+        self.intake.set(ControlMode.PercentOutput, DC)
 
     def stop(self):
-        self.intake.stopMotor()
+        self.intake.set(ControlMode.PercentOutput, 0)
         self.shoulder.stopMotor()
+
+
+    def periodic(self):
+        ''' Sets the idle mode to Brake when the shoulder is inside (0 rotations) and Coast when it's deployed (0.25 rotations). 
+        This allows the intake to be "floating" when deployed, but tight and secure when stowed.
+        '''
+        # 0.0 is Stowed (Inside), 0.25 is Deployed (Outside/90 deg)
+        current_pos = self.shoulder_encoder.getPosition()
+
+        # If we are past x degrees (approx 0.2 rotations), switch to Coast
+        # This allows the "floating" intake to be bumped by game pieces
+        if current_pos > 0.2:
+            self.set_idle_mode(False) # Coast
+        else:
+            # When inside, use Brake to keep it tight and prevent rattling
+            self.set_idle_mode(True) # Brake
+            
+
+    def set_idle_mode(self, use_brake: bool):
+        """Swaps the motor between Coast and Brake by re-applying config"""
+        if use_brake == self.is_braking:
+            return # Don't re-apply if we are already in that mode
+
+        target_config = self.brake_config if use_brake else self.coast_config
+        
+        # We use kNoPersistParameters so we don't wear out the flash memory
+        self.shoulder.configure(target_config, 
+                                 ResetMode.kNoResetSafeParameters, 
+                                 PersistMode.kNoPersistParameters)
+        self.is_braking = use_brake

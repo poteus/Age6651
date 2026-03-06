@@ -17,7 +17,7 @@ from subsystems.vision import Vision
 from subsystems.indexer import Indexer
 from subsystems.shooter import Shooter
 from subsystems.turret import Turret
-from subsystems.intake import Intake
+# from subsystems.intake import Intake
 
 import wpilib
 from wpilib import DriverStation, SmartDashboard
@@ -53,9 +53,8 @@ class RobotContainer:
         self.drivetrain = TunerConstants.create_drivetrain()
         self.shooter = Shooter()
         self.indexer = Indexer(self.shooter)
-        self.intake = Intake()
-        
-        #self.turret = Turret()
+        # self.intake = Intake()
+        self.turret = Turret()
 
         # Constants
         self._max_speed = (
@@ -161,18 +160,26 @@ class RobotContainer:
                 lambda: self.indexer.stop()))
 
 
-        self._joystick.leftBumper().whileTrue(
-            commands2.cmd.run(
-                lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
-        ).onFalse(commands2.cmd.run(lambda: self.intake.stop()
-        ))
+        # self._joystick.leftBumper().whileTrue(
+        #     commands2.cmd.run(
+        #         lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
+        # ).onFalse(commands2.cmd.run(lambda: self.intake.stop()
+        # ))
 
-        self._joystick.povUp().whileTrue(
-            commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
+        # self._joystick.povUp().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
+        # )
+
+        # self._joystick.povDown().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(180))  # Placeholder position for "down"
+        # )
+
+        self._joystick.povLeft().whileTrue(
+            commands2.cmd.runOnce(lambda: self.turret.aim_at_angle(40), self.turret)  # Placeholder angle for "left"
         )
 
-        self._joystick.povDown().whileTrue(
-            commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(180))  # Placeholder position for "down"
+        self._joystick.povRight().whileTrue(
+            commands2.cmd.runOnce(lambda: self.turret.aim_at_angle(-15), self.turret)  # Placeholder angle for "right"
         )
 
         # --- LOGGER CONTROL ---
