@@ -7,16 +7,18 @@ from wpimath.units import seconds
 
 from ntcore import NetworkTableInstance
 
+from subsystems.shooter import Shooter
+
 class Indexer(commands2.Subsystem):
     '''
     The indexer subsystem funnels the fuel from wherever we store fuel all the way to the shooter
     '''
     last_indexer_rps = -1.0
 
-    def __init__(self, shooter):
+    def __init__(self, _shooter:Shooter):
         super().__init__()
 
-        self.shooter = shooter
+        self.shooter = _shooter
 
         # Init network table for speed of indexer
         nt = NetworkTableInstance.getDefault()
@@ -32,9 +34,11 @@ class Indexer(commands2.Subsystem):
         # We also want to publish the ACTUAL speed so we can compare them
         self.actual_pub = table.getDoubleTopic("Indexer/IndexerActualRPS").publish()
 
-        # Initialize Motors (Assuming CAN IDs 50 and 51)
+        # Initialize Motors (Assuming CAN IDs 50, 51 for indexer, 52 for ChakaChaka Hopper)
         self.front = SparkMax(51, SparkLowLevel.MotorType.kBrushless)
         self.back = SparkMax(50, SparkLowLevel.MotorType.kBrushless)
+        self.hopper = SparkMax(52, SparkLowLevel.MotorType.kBrushless)
+
 
         # Create Configuration
         # We set the conversion factor to 1/60 to turn RPM into RPS
@@ -87,11 +91,46 @@ class Indexer(commands2.Subsystem):
         self.front_encoder = self.front.getEncoder()
         self.back_encoder = self.back.getEncoder()
 
+        # Hopper Configuration -----------------------------------
+        self.hopper_config = SparkMaxConfig()
+        self.hopper_config.inverted(True)
+
+        # Apply configuration to both motors
+        self.hopper.configure(
+            self.hopper_config,
+             ResetMode.kResetSafeParameters, 
+            PersistMode.kPersistParameters)
+
+    # Methods ------------------------------------
+
+    def set_duty_cycle_hopper(self, DC: float):
+        ''' Sets Duty Cycle to Hopper motor '''
+        if DC > .2:
+            DC = .2
+        elif DC < -.2:
+            DC =-.2
+
+        self.hopper.set(DC)
+
+    def stop_hopper(self):
+        ''' Stops hopper '''
+        self.hopper.stopMotor()
+
     def set_velocity(self, rps: float):
         """Sets the indexer speed in Revolutions per Second."""
         self.front_loop.setReference(rps, SparkMax.ControlType.kVelocity)
         back_target = rps * (7.0 / 5.0)
         self.back_loop.setReference(back_target, SparkMax.ControlType.kVelocity)
+
+    def run(self):
+        ''' Starts the indexer and the hopper (ChakaChaka Bum Bum)'''
+        self.set_velocity(40)
+        self.set_duty_cycle_hopper(.1)
+
+    def stop_all(self):
+        ''' Stop indexer and hopper '''
+        self.stop()
+        self.stop_hopper()
 
     def stop(self):
         self.front.stopMotor()
@@ -101,24 +140,21 @@ class Indexer(commands2.Subsystem):
     def indexer_control_rps(self):
         ''' Activates the indexer control using the RPS value from the dashboard,
             applying changes only when the target or the shooter readiness changes. '''
-        
-        # Get the current desired speed from the dashboard/subscriber
-        target_rps = self.velocity_sub.get()
 
         # Check if the shooter is actually ready
-        is_ready = self.shooter.reach_rps() and self.shooter.reach_hood_position()
+        is_ready = self.shooter.reach_rps() #and self.shooter.reach_hood_position()
 
         if is_ready:
             # Only send the CAN frame if the target has actually changed
             # OR if we were previously stopped and now we are starting
-            if target_rps != self.last_indexer_rps:
-                self.set_velocity(target_rps)
-                self.last_indexer_rps = target_rps
+            if self.last_indexer_rps == 0:
+                self.run()
+                self.last_indexer_rps = 40
         else:
             # If the shooter isn't ready, we MUST stop.
             # We check if last_indexer_rps != 0 so we don't spam 'stop' repeatedly.
             if self.last_indexer_rps != 0:
-                self.stop()
+                self.stop_all()
                 self.last_indexer_rps = 0
 
     # def periodic(self):

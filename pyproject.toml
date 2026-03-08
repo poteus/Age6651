@@ -14,13 +14,10 @@ components = [
     "commands2"
 ]
 
-dependencies = [
-    "robotpy-ctre"
-]
-
 # Other pip packages to install
 requires = [
     "robotpy-pathplannerlib",
     "phoenix6",
-    "robotpy-rev"
+    "robotpy-rev",
+    "robotpy-ctre"
 ]

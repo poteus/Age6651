@@ -17,7 +17,8 @@ from subsystems.vision import Vision
 from subsystems.indexer import Indexer
 from subsystems.shooter import Shooter
 from subsystems.turret import Turret
-# from subsystems.intake import Intake
+from subsystems.intake import Intake
+from generated.Crimson_tuner_constants import TunerConstants 
 
 import wpilib
 from wpilib import DriverStation, SmartDashboard
@@ -34,28 +35,14 @@ class RobotContainer:
     """
 
     def __init__(self) -> None:
-        # Grabs the serial number from RobotController and prints it
-        serial = wpilib.RobotController.getSerialNumber(); print(f"Robot Serial Number: {serial}")
 
-        # Detect which roborio is running to know if it is Murphy or Crimson using the serial number
-        if serial == "03415952":
-            print("This is Crimson.") # Crimson has two cameras
+        # Limelight Initialization
+        self.vision = Vision(["limelight-right", "limelight-back"])
 
-            #self.vision = Vision(["limelight-front", "limelight-back"])
-            from generated.Crimson_tuner_constants import TunerConstants 
-        else:
-            print("This is Murphy.") # Murphy (or anything else) has only one camera
-
-            #self.vision = Vision(["limelight-front"])
-            from generated.Murphy_tuner_constants import TunerConstants 
-
-        # Subsystems
+        # Subsystem Drive System ------------------------------
         self.drivetrain = TunerConstants.create_drivetrain()
-        self.shooter = Shooter()
-        self.indexer = Indexer(self.shooter)
-        # self.intake = Intake()
-        self.turret = Turret()
-
+        self.drivetrain.vision = self.vision
+        
         # Constants
         self._max_speed = (
             TunerConstants.speed_at_12_volts
@@ -65,7 +52,6 @@ class RobotContainer:
             0.75
         )  # 3/4 of a rotation per second max angular velocity
 
-        print("With MOTION MAGIC.")
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
             swerve.requests.FieldCentric()
@@ -84,6 +70,12 @@ class RobotContainer:
         self._logger = Telemetry(self._max_speed)
 
         self._joystick = CommandXboxController(0)
+
+        # Subsystems ---------------------------------
+        self.shooter = Shooter(self._logger)
+        self.indexer = Indexer(self.shooter)
+        self.intake = Intake()
+        self.turret = Turret()
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -145,20 +137,37 @@ class RobotContainer:
             self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
         )
 
+        # Right Trigger -> Shoot Only
         self._joystick.rightTrigger().whileTrue(
             commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
-                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
+                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
+                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(.4), self.intake))
         ).onFalse(commands2.cmd.runOnce(
                 lambda:self.shooter.stop(), self.shooter).alongWith(
-                commands2.cmd.runOnce(lambda: self.indexer.stop(), self.indexer)))
+                    commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
+                        commands2.cmd.runOnce(lambda:self.intake.stop())))
             
-
+        # Left Trigger -> Index Only
         self._joystick.leftTrigger().whileTrue(
             commands2.cmd.run(
                 lambda: self.indexer.set_velocity(40.0))  # Placeholder RPS value for indexing
         ).onFalse(commands2.cmd.runOnce(
                 lambda: self.indexer.stop()))
 
+        # Left Bumper -> Intake Only
+        self._joystick.leftBumper().whileTrue(
+            commands2.cmd.run(
+                lambda: self.intake.set_intake_dutyCycle(0.40))
+        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
+        ))
+
+        # Right Bumper -> ChakaChaka Only
+        self._joystick.rightBumper().whileTrue(
+            commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
+                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
+        ).onFalse(commands2.cmd.runOnce(
+                lambda:self.shooter.stop(), self.shooter).alongWith(
+                    commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)))
 
         # self._joystick.leftBumper().whileTrue(
         #     commands2.cmd.run(
@@ -189,6 +198,11 @@ class RobotContainer:
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
+        )
+
+        # Use a button (e.g., Back button) to manually seed the Pigeon if it drifts
+        self._joystick.back().onTrue(
+            commands2.cmd.runOnce(lambda: self.drivetrain.seed_pigeon_with_vision())
         )
 
     def getAutonomousCommand(self) -> commands2.Command:

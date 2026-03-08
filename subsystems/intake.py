@@ -11,9 +11,11 @@ class Intake(commands2.Subsystem):
     def __init__(self):
         super().__init__()
 
+        self.is_shoulder_braking = True
+
         # Shoulder and intake motors CHECK THESE
-        self.intake = TalonSRX(510)
-        self.shoulder = SparkMax(500, SparkLowLevel.MotorType.kBrushless)
+        self.intake = TalonSRX(18)
+        self.shoulder = SparkMax(53, SparkLowLevel.MotorType.kBrushless)
 
         # Create Configurations for both intake and shoulder
 
@@ -51,7 +53,7 @@ class Intake(commands2.Subsystem):
         self.shoulder_config.limitSwitch.reverseLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyOpen)
         
         # When reverse limit switch is reached, it stops the motors and set encoder position to 0.
-        self.shoulder_config.limitSwitch.reverseLimitSwitchBehavior( # type: ignore
+        self.shoulder_config.limitSwitch.reverseLimitSwitchTriggerBehavior( # type: ignore
             rev.LimitSwitchConfig.Behavior.kStopMovingMotorAndSetPosition
         )
         self.shoulder_config.limitSwitch.reverseLimitSwitchPosition(0.0)
@@ -72,8 +74,10 @@ class Intake(commands2.Subsystem):
         # kV = 0.13267
         # kA = 0.0068033
         # kP = 0.00026339
-        self.shoulder_config.closedLoop.P(0.0001).I(0).D(0.00005).velocityFF(0.13267)
-        self.shoulder_config.closedLoop.feedForward.kS(0.47088)
+        self.shoulder_config.closedLoop.P(2).I(0).D(0.1)    #.velocityFF(0.016)
+        self.shoulder_config.closedLoop.feedForward.kS(0.2).kG(0.4).kV(0.16)
+
+        
 
         # Config object for Braking mode
         self.brake_config = SparkMaxConfig()
@@ -127,11 +131,13 @@ class Intake(commands2.Subsystem):
 
         # If we are past x degrees (approx 0.2 rotations), switch to Coast
         # This allows the "floating" intake to be bumped by game pieces
-        if current_pos > 0.2:
+        if current_pos > 0.2 and self.is_shoulder_braking:
             self.set_idle_mode(False) # Coast
-        else:
+            self.is_shoulder_braking = False
+        elif current_pos <= 0.2 and not self.is_shoulder_braking:
             # When inside, use Brake to keep it tight and prevent rattling
             self.set_idle_mode(True) # Brake
+            self.is_shoulder_braking = True
             
 
     def set_idle_mode(self, use_brake: bool):
@@ -143,6 +149,6 @@ class Intake(commands2.Subsystem):
         
         # We use kNoPersistParameters so we don't wear out the flash memory
         self.shoulder.configure(target_config, 
-                                 ResetMode.kNoResetSafeParameters, 
+                                ResetMode.kNoResetSafeParameters, 
                                  PersistMode.kNoPersistParameters)
         self.is_braking = use_brake

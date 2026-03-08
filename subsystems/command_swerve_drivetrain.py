@@ -180,7 +180,9 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             SysIdRoutine.Config(
                 # Use default ramp rate (1 V/s) and timeout (10 s)
                 # Use dynamic voltage of 7 V
-                stepVoltage=7.0,
+                rampRate=5.0, 
+                stepVoltage=7.0, # This is actually 'step_amps' now
+                timeout=10.0,
                 # Log state with SignalLogger class
                 recordState=lambda state: SignalLogger.write_string(
                     "sysid-test-state", SysIdRoutineLog.stateEnumToString(state)
@@ -227,7 +229,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         See the documentation of swerve.requests.SysIdSwerveRotation for info on importing the log to SysId.
         """
 
-        self._sys_id_routine_to_apply = self._sys_id_routine_rotation
+        self._sys_id_routine_to_apply = self._sys_id_routine_translation
         """The SysId routine to test"""
 
         if utils.is_simulation():
@@ -270,21 +272,6 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         """
         return self._sys_id_routine_to_apply.dynamic(direction)
 
-    def periodic(self):
-        # Periodically try to apply the operator perspective.
-        # If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-        # This allows us to correct the perspective in case the robot code restarts mid-match.
-        # Otherwise, only check and apply the operator perspective if the DS is disabled.
-        # This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-        if not self._has_applied_operator_perspective or DriverStation.isDisabled():
-            alliance_color = DriverStation.getAlliance()
-            if alliance_color is not None:
-                self.set_operator_perspective_forward(
-                    self._RED_ALLIANCE_PERSPECTIVE_ROTATION
-                    if alliance_color == DriverStation.Alliance.kRed
-                    else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
-                )
-                self._has_applied_operator_perspective = True
 
     def _start_sim_thread(self):
         def _sim_periodic():
@@ -318,3 +305,92 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         :type vision_measurement_std_devs:  tuple[float, float, float] | None
         """
         swerve.SwerveDrivetrain.add_vision_measurement(self, vision_robot_pose, utils.fpga_to_current_time(timestamp), vision_measurement_std_devs)
+
+    def seed_pigeon_with_vision(self):
+        """
+        Grabs the current vision pose and 'seeds' the Pigeon 2
+        so the robot heading matches the field map.
+        """
+        if not hasattr(self, "vision") or not self.vision:
+            return
+
+        vision_updates = self.vision.get_estimated_global_pose()
+        
+        # Sort updates to prioritize LL4 (Right) over LL3 (Back)
+        best_pose = None
+        for name, pose, timestamp, area in vision_updates:
+            # Only seed if we have a very clear view of a tag (Area > .4%)
+            print(f"Area for {name}: {area:.2f}%")
+            if area > .4:
+                if name == "limelight-right":
+                    best_pose = pose
+                    break # LL4 found, stop looking
+                elif name == "limelight-back":
+                    best_pose = pose # Keep looking in case LL4 is also there
+
+        if best_pose is not None:
+            # Reset the drivetrain odometry to the vision pose
+            # This 'seeds' the Pigeon 2 by setting its rotation to match the pose
+            self.reset_pose(best_pose)
+            print(f"Pigeon seeded successfully with {best_pose.rotation().degrees():.2f}°")
+        else:
+            print("Pigeon seeding failed: No clear tags visible.")
+
+
+
+    def periodic(self):
+        super().periodic()
+
+        # Periodically try to apply the operator perspective.
+        # If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
+        # This allows us to correct the perspective in case the robot code restarts mid-match.
+        # Otherwise, only check and apply the operator perspective if the DS is disabled.
+        # This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
+        if not self._has_applied_operator_perspective or DriverStation.isDisabled():
+            alliance_color = DriverStation.getAlliance()
+            if alliance_color is not None:
+                self.set_operator_perspective_forward(
+                    self._RED_ALLIANCE_PERSPECTIVE_ROTATION
+                    if alliance_color == DriverStation.Alliance.kRed
+                    else self._BLUE_ALLIANCE_PERSPECTIVE_ROTATION
+                )
+                self._has_applied_operator_perspective = True
+
+        # 1. FEED GYRO TO VISION
+        if hasattr(self, "vision") and self.vision:
+            # Get Pigeon data from the Phoenix 6 swerve state
+            # state.pose.rotation() is our current fused heading
+            state = self.get_state()
+            pigeon = self.pigeon2
+            
+            # Extract values (degrees)
+            yaw = state.pose.rotation().degrees()
+            # Raw velocity is usually in rotations/sec, convert to deg/sec
+            yaw_rate = pigeon.get_angular_velocity_z_world().value
+            
+            # Send to cameras
+            self.vision.patch_limelight_orientation(
+                yaw, 
+                yaw_rate,
+                pigeon.get_pitch().value,
+                pigeon.get_roll().value
+            )
+
+            # 2. PROCESS INCOMING POSES
+            vision_updates = self.vision.get_estimated_global_pose()
+            current_speeds = state.speeds
+            is_moving = abs(current_speeds.vx) > 0.1 or abs(current_speeds.vy) > 0.1
+
+            for name, pose, timestamp, area in vision_updates:
+                if area < 0.5: continue
+
+                if name == "limelight-right": # LL4 (Fusion Mode)
+                    # Because LL4 is fusing Pigeon + Internal, it's extremely stable
+                    self.add_vision_measurement(pose, timestamp, (0.05, 0.05, 0.05))
+                
+                elif name == "limelight-back": # LL3 (External Mode)
+                    if not is_moving:
+                        self.add_vision_measurement(pose, timestamp, (0.1, 0.1, 0.1))
+                    else:
+                        # Heavy de-weight while moving since it relies solely on remote Pigeon data
+                        self.add_vision_measurement(pose, timestamp, (2.0, 2.0, 2.0))

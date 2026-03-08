@@ -4,6 +4,7 @@ from wpilib.sysid import SysIdRoutineLog
 from phoenix6 import hardware, configs, controls, signals, SignalLogger
 from wpimath.units import seconds
 from wpilib import SmartDashboard
+from telemetry import Telemetry
 
 from ntcore import NetworkTableInstance
 
@@ -19,8 +20,9 @@ class Shooter(commands2.Subsystem):
     lower_limit = 0.005
     upper_limit = 0.121
     
-    def __init__(self):
+    def __init__(self, _telemetry:Telemetry):
         super().__init__()
+        self.telemetry = _telemetry
 
         # Flywheel Setup (Kraken X60 - CAN ID 16) ---
         self.flywheel = hardware.TalonFX(16)
@@ -152,8 +154,9 @@ class Shooter(commands2.Subsystem):
         ''' Read the speed and the angle to shoot from the dashboard and apply them.
         Sets the setpoint of both the flywheel and the hood based on the values from the dashboard.
         Once it has been set, it waits until any of the two values change before updating again. '''
-        current_rps = SmartDashboard.getNumber("Shooter Speed", 0.0)
-        current_hood_rot = SmartDashboard.getNumber("Hood Position", 0.0)
+        current_rps = self.telemetry.get_target_shooter_rps()
+        current_hood_rot = self.telemetry.get_target_hood_rot()
+
         if current_rps != self.last_rps:
             self.set_flywheel_rps(current_rps)
             self.last_rps = current_rps
@@ -163,16 +166,24 @@ class Shooter(commands2.Subsystem):
 
     def actual_rps(self):
         ''' Returns the actual RPS of the flywheel based on the encoder velocity. '''
-        return self.flywheel.get_velocity().refresh().value
+        return self.flywheel.get_velocity().value
     
     def actual_hood_position(self):
         ''' Returns the actual position of the hood in rotations based on the encoder position. '''
-        return self.hood.get_position().refresh().value
+        return self.hood.get_position().value
 
-    def reach_rps(self, tolerance: float = 3.0):
+    def reach_rps(self, tolerance: float = 10.0):
         ''' Returns True if the flywheel is within the specified tolerance of the target RPS. '''
         return abs(self.actual_rps() - self.last_rps) < tolerance
 
     def reach_hood_position(self, tolerance: float = 0.01):
         ''' Returns True if the hood is within the specified tolerance of the target position. '''
         return abs(self.actual_hood_position() - self.last_hood_rot) < tolerance
+    
+    def periodic(self) -> None:
+        # Get the real speed from the Kraken.velocity returns rotations per second
+        actual_rps = self.flywheel.get_velocity().value
+        
+        # Send it to your telemetry object
+        self.telemetry.set_actual_shooter_rps(actual_rps)
+        

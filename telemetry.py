@@ -75,6 +75,30 @@ class Telemetry:
         for i, module_mechanism in enumerate(self._module_mechanisms):
             SmartDashboard.putData(f"Module {i}", module_mechanism)
 
+        # Shooter --------------------------------
+         # Create a Shooter table
+        self._shooter_table = self._inst.getTable("Shooter")
+        # Create the Topic and the Subscriber
+        # This will show up in Elastic under "Shooter/TargetRPS"
+        self._target_rps_topic = self._shooter_table.getDoubleTopic("TargetRPS")
+        self._target_rps_sub = self._target_rps_topic.subscribe(60.0) # Default 60 RPS
+        # A publisher to confirm the value back to the dashboard
+        self._target_rps_pub = self._target_rps_topic.publish()
+        self._target_rps_pub.set(60.0)
+
+        # This will show up in Elastic under "Shooter/ActualRPS"
+        self._actual_rps_pub = self._shooter_table.getDoubleTopic("ActualRPS").publish()
+
+        # Hood --------------------------------
+        # Create the Topic and the Subscriber
+        # This will show up in Elastic under "Hood/Rot"
+        self._target_rot_topic = self._shooter_table.getDoubleTopic("TargetRot")
+        self._target_rot_sub = self._target_rot_topic.subscribe(40.0) # Default 40 RPS
+        # A publisher to confirm the value back to the dashboard
+        self._target_rot_pub = self._target_rot_topic.publish()
+        self._target_rot_pub.set(40.0)
+
+
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
         Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger.
@@ -109,10 +133,24 @@ class Telemetry:
 
         # Telemeterize the pose to a Field2d
         self._field_type_pub.set("Field2d")
-        self._field_pub.set(pose_array)
+        #self._field_pub.set(pose_array)
 
         # Telemeterize each module state to a Mechanism2d
         for i, module_state in enumerate(state.module_states):
             self._module_speeds[i].setAngle(module_state.angle.degrees())
             self._module_directions[i].setAngle(module_state.angle.degrees())
             self._module_speeds[i].setLength(module_state.speed / (2 * self._max_speed))
+
+        # Read Shooter
+
+       
+        # Getter method so the robot code can ask for the current value
+    def get_target_shooter_rps(self) -> float:
+        return self._target_rps_sub.get()
+    
+    def get_target_hood_rot(self) -> float:
+        return self._target_rot_sub.get()
+    
+    def set_actual_shooter_rps(self, rps: float):
+        """Publishes the real-time speed of the shooter to the dashboard."""
+        self._actual_rps_pub.set(rps)
