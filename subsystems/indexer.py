@@ -14,6 +14,7 @@ class Indexer(commands2.Subsystem):
     The indexer subsystem funnels the fuel from wherever we store fuel all the way to the shooter
     '''
     last_indexer_rps = -1.0
+    state_hopper_forward = True
 
     def __init__(self, _shooter:Shooter):
         super().__init__()
@@ -100,6 +101,8 @@ class Indexer(commands2.Subsystem):
             self.hopper_config,
              ResetMode.kResetSafeParameters, 
             PersistMode.kPersistParameters)
+        
+        self.last_hopper_encoder_pos = self.hopper.getEncoder().getPosition()
 
     # Methods ------------------------------------
 
@@ -125,7 +128,7 @@ class Indexer(commands2.Subsystem):
     def run(self):
         ''' Starts the indexer and the hopper (ChakaChaka Bum Bum)'''
         self.set_velocity(40)
-        self.set_duty_cycle_hopper(.1)
+        self.chakachaka()
 
     def stop_all(self):
         ''' Stop indexer and hopper '''
@@ -156,6 +159,21 @@ class Indexer(commands2.Subsystem):
             if self.last_indexer_rps != 0:
                 self.stop_all()
                 self.last_indexer_rps = 0
+
+    def chakachaka(self):
+        ''' Goes forward 2 laps then backward 2 lap to shake loose any stuck fuel. '''
+        position = self.hopper.getEncoder().getPosition()
+        print(f"position - {position}")
+        if self.state_hopper_forward:
+            if position < 2:
+                self.hopper.set(0.1)
+            else:
+                self.state_hopper_forward = False
+        else:
+            if position > 0:
+                self.hopper.set(-0.1)
+            else:
+                self.state_hopper_forward = True
 
     # def periodic(self):
     #     # Log data for debugging

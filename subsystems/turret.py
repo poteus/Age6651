@@ -1,24 +1,48 @@
 import commands2
 import commands2.sysid
 from phoenix6 import hardware, configs, signals, controls
-from wpilib import SmartDashboard
+from wpilib import SmartDashboard, DriverStation
 from wpimath.units import seconds
 import math
 from wpimath.geometry import Pose2d, Translation2d
+from telemetry import Telemetry
 
 class Turret(commands2.Subsystem):
     '''
     The turret subsystem controls the yaw of the shooter (subsystems.shooter)
     '''
-    
-    # Target: Center of the Speaker (Update coordinates based on Alliance)
-    # Blue Speaker is roughly at (0.0, 5.5)
-    HUB_POSITION = Translation2d(0.0, 5.5)
-    lower_limit = -0.08013
-    upper_limit = 0.246335
 
-    def __init__(self):
+    LOWER_LIMIT = -0.08013
+    UPPER_LIMIT = 0.246335
+    blue_hub = Pose2d(0.0, 5.5, 0.0) # Update coordinates based on Alliance
+    red_hub = Pose2d(16.54, 8.02, 0.0) # Update coordinates based on Alliance
+    top_blue_corner = Pose2d(0.0, 8.02, 0.0) # Update coordinates based on Alliance
+    top_red_corner = Pose2d(16.54, 0.0, 0.0) # Update coordinates based on Alliance
+    bottom_blue_corner = Pose2d(0.0, 0.0, 0.0) # Update coordinates based on Alliance
+    bottom_red_corner = Pose2d(16.54, 8.02, 0.0) # Update coordinates based on Alliance
+
+    def __init__(self, _team_color: DriverStation.Alliance, _telemetry: Telemetry):
         super().__init__()
+
+        # Team Color and Hub Position Initialization --------------------------------------------------------------------------------
+        self.TEAM_COLOR: str = ""
+        self.HUB_POSITION: Translation2d = Translation2d(0.0, 0.0)
+
+        if _team_color == DriverStation.Alliance.kRed:
+            self.TEAM_COLOR = "Red"
+            self.HUB_POSITION = Translation2d(16.54, 8.02) # !!!!!!!!!!!!!!!!!!!!! CHECK COORDINATES !!!!!!!!!!!!!!!!!!!!!
+
+        else: # Blue is default just in case
+            self.TEAM_COLOR = "Blue"
+            self.HUB_POSITION = Translation2d(0.0, 5.5) # !!!!!!!!!!!!!!!!!!!!! CHECK COORDINATES !!!!!!!!!!!!!!!!!!!!!
+        
+        # Target: Center of the Speaker (Update coordinates based on Alliance)
+        # Blue Speaker is roughly at (0.0, 5.5)
+        self.HUB_POSITION = Translation2d(0.0, 5.5)
+        self.alliance = ""
+        # ---------------------------------------------------------------------------------------------------------------------------
+
+        self.telemetry = _telemetry
 
         # Gear Ratio: 200 teeth / 20 teeth = 10
         # 10 rotations of the Kraken = 1 rotation of the Turret
@@ -47,9 +71,9 @@ class Turret(commands2.Subsystem):
 
         # Soft Limits: Prevent rotating past 360 degrees (0.0 to 1.0 rotations)
         # This protects cables!
-        cfg.software_limit_switch.forward_soft_limit_threshold = self.upper_limit
+        cfg.software_limit_switch.forward_soft_limit_threshold = self.UPPER_LIMIT
         cfg.software_limit_switch.forward_soft_limit_enable = True
-        cfg.software_limit_switch.reverse_soft_limit_threshold = self.lower_limit
+        cfg.software_limit_switch.reverse_soft_limit_threshold = self.LOWER_LIMIT
         cfg.software_limit_switch.reverse_soft_limit_enable = True
 
         # Reverse the motor
@@ -87,10 +111,10 @@ class Turret(commands2.Subsystem):
 
     def set_position(self, rotations: float):
         """Sets turret position (0.0 to 1.0 represents 0 to 360 degrees)"""
-        if self.lower_limit <= rotations:
-            rotations = self.lower_limit
-        elif rotations <= self.upper_limit:
-            rotations = self.upper_limit
+        if self.LOWER_LIMIT <= rotations:
+            rotations = self.LOWER_LIMIT
+        elif rotations <= self.UPPER_LIMIT:
+            rotations = self.UPPER_LIMIT
         self.motor.set_control(self.position_request.with_position(rotations))
 
     def stop(self):
@@ -127,15 +151,16 @@ class Turret(commands2.Subsystem):
         target_rotations = relative_angle / (2 * math.pi)
         
         # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
-        target_rotations = max(self.lower_limit, min(self.upper_limit, target_rotations))
+        target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
         
         # Checks if the target is on the corret side of the robot and within the soft limits before moving
-        if self.lower_limit <= target_rotations <= self.upper_limit:
+        if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
             # Within domain: Move to target
             self.set_position(target_rotations)
         else:
-        #     # Outside domain: Do nothing (or you could call self.stop())
-        #     # This prevents the motor from 'hunting' for a target it can't reach.
+            # Outside domain: Do nothing (or you could call self.stop())
+            # This prevents the motor from 'hunting' for a target it can't reach.
+            # self.stop()
             pass
 
 
@@ -151,10 +176,70 @@ class Turret(commands2.Subsystem):
         while rotation_aim < -0.5: rotation_aim += 1
         
         # Checks if the target is on the corret side of the robot and within the soft limits before moving
-        if self.lower_limit <= rotation_aim <= self.upper_limit:
+        if self.LOWER_LIMIT <= rotation_aim <= self.UPPER_LIMIT:
             # Within domain: Move to target
             self.set_position(rotation_aim)
         else:
-        #     # Outside domain: Do nothing (or you could call self.stop())
-        #     # This prevents the motor from 'hunting' for a target it can't reach.
+            # Outside domain: Do nothing (or you could call self.stop())
+            # This prevents the motor from 'hunting' for a target it can't reach.
+            # self.stop()
             pass
+
+    def aim_to_position(self, position: Pose2d, robot_pose: Pose2d):
+        ''' Calculates the angle to the hub and moves the turret. 
+        Assumes 0 rotations = facing right (positive X) and positive rotations are counterclockwise. '''
+
+        # Vector from robot to hub (x,y)
+        target_vector = position.translation() - robot_pose.translation()
+        
+        # Field angle (0 is Right in your system, so we adjust WPILib's atan2)
+        # WPILib atan2: 0 is Forward (+X). 
+        # To make 0 "Right", we subtract 90 degrees.
+        target_field_angle = math.atan2(target_vector.y, target_vector.x) - (math.pi / 2)
+        
+        robot_heading = robot_pose.rotation().radians()
+        relative_angle = target_field_angle - robot_heading
+        
+        # Normalize
+        while relative_angle > math.pi: relative_angle -= 2 * math.pi
+        while relative_angle < -math.pi: relative_angle += 2 * math.pi
+
+        # Convert to rotations
+        target_rotations = relative_angle / (2 * math.pi)
+        
+        # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
+        target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
+        
+        # Checks if the target is on the corret side of the robot and within the soft limits before moving
+        if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
+            # Within domain: Move to target
+            self.set_position(target_rotations)
+        else:
+            # Outside domain: Do nothing (or you could call self.stop())
+            # This prevents the motor from 'hunting' for a target it can't reach.
+            # self.stop()
+            pass   
+
+    def periodic(self):
+        """ Placeholder for autorotation, Aim at hub or team corners depending on the position of the robot on the field.
+        If on the opposing team's side, aim for our team's corner. If on our side/neutral zone, aim for our hub. """
+
+        
+        current_robot_pose: Pose2d = self.telemetry._drive_pose_subscriber.get()
+        y_location = current_robot_pose.translation().y
+        x_location = current_robot_pose.translation().x
+
+        if self.TEAM_COLOR == "Blue":
+            if y_location < 4.0: # If we are on the Blue side
+                self.aim_to_position(self.blue_hub, current_robot_pose) # Aim at our corner (Update coordinates)
+                self.alliance == "ours"
+            if 4<y_location<5.5: # If we are in the neutral zone
+                if x_location > 4.0: # If we are on the Blue side of the neutral zone
+                    self.aim_to_position(self.top_blue_corner, current_robot_pose) # Aim at the hub
+                else: # If we are on the Red side of the neutral zone
+                    self.aim_to_position(self.bottom_blue_corner, current_robot_pose) # Aim at the hub
+                self.alliance == "neutral"
+            if y_location > 5.5: # If we are on the Red side
+                self.alliance == "opponent" 
+
+        

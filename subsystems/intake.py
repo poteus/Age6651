@@ -8,10 +8,11 @@ class Intake(commands2.Subsystem):
     The intake subsystem controls the intake of fuel
     '''
 
+    is_shoulder_braking = True
+    last_shoulder_position = False
+
     def __init__(self):
         super().__init__()
-
-        self.is_shoulder_braking = True
 
         # Shoulder and intake motors CHECK THESE
         self.intake = TalonSRX(18)
@@ -77,8 +78,6 @@ class Intake(commands2.Subsystem):
         self.shoulder_config.closedLoop.P(2).I(0).D(0.1)    #.velocityFF(0.016)
         self.shoulder_config.closedLoop.feedForward.kS(0.2).kG(0.4).kV(0.16)
 
-        
-
         # Config object for Braking mode
         self.brake_config = SparkMaxConfig()
         self.brake_config.apply(self.shoulder_config) # Copy all master settings
@@ -106,7 +105,11 @@ class Intake(commands2.Subsystem):
     def set_shoulder_position(self, rotations: float):
         ''' Set the shoulder to a specific position in rotations. 0 rotations is the "home" position, and positive rotations are clockwise.
         '''
-        self.shoulder_loop.setReference(rotations, SparkMax.ControlType.kPosition)
+        requested_position = rotations
+
+        if requested_position != self.last_shoulder_position:
+            self.shoulder_loop.setReference(requested_position, SparkMax.ControlType.kPosition)
+            self.last_shoulder_position = requested_position
 
     def set_intake_dutyCycle(self, DC: float):
         '''Set the DutyCycle for the Intake Motor. DC should be between -1.0 and 1.0, where 1.0 is full forward and -1.0 is full reverse.
@@ -150,5 +153,5 @@ class Intake(commands2.Subsystem):
         # We use kNoPersistParameters so we don't wear out the flash memory
         self.shoulder.configure(target_config, 
                                 ResetMode.kNoResetSafeParameters, 
-                                 PersistMode.kNoPersistParameters)
+                                PersistMode.kNoPersistParameters)
         self.is_braking = use_brake

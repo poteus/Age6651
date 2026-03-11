@@ -21,6 +21,7 @@ class Telemetry:
         # Robot swerve drive state
         self._drive_state_table = self._inst.getTable("DriveState")
         self._drive_pose = self._drive_state_table.getStructTopic("Pose", Pose2d).publish()
+        self._drive_pose_subscriber = self._drive_state_table.getStructTopic("Pose", Pose2d).subscribe(Pose2d(0.0, 0.0, 0.0)) # Default pose at origin
         self._drive_speeds = self._drive_state_table.getStructTopic("Speeds", ChassisSpeeds).publish()
         self._drive_module_states = self._drive_state_table.getStructArrayTopic("ModuleStates", SwerveModuleState).publish()
         self._drive_module_targets = self._drive_state_table.getStructArrayTopic("ModuleTargets", SwerveModuleState).publish()
@@ -30,6 +31,7 @@ class Telemetry:
 
         # Robot pose for field positioning
         self._table = self._inst.getTable("Pose")
+        self._field_sub = self._table.getDoubleArrayTopic("robotPose").subscribe([0.0, 0.0, 0.0]) # Default pose at origin
         self._field_pub = self._table.getDoubleArrayTopic("robotPose").publish()
         self._field_type_pub = self._table.getStringTopic(".type").publish()
 

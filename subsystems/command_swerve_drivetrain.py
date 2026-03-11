@@ -314,27 +314,22 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         if not hasattr(self, "vision") or not self.vision:
             return
 
-        vision_updates = self.vision.get_estimated_global_pose()
+        vision_updates = self.vision.get_mt1_pose()
         
-        # Sort updates to prioritize LL4 (Right) over LL3 (Back)
         best_pose = None
-        for name, pose, timestamp, area in vision_updates:
-            # Only seed if we have a very clear view of a tag (Area > .4%)
-            print(f"Area for {name}: {area:.2f}%")
-            if area > .4:
-                if name == "limelight-right":
-                    best_pose = pose
-                    break # LL4 found, stop looking
-                elif name == "limelight-back":
-                    best_pose = pose # Keep looking in case LL4 is also there
+        for name, pose, area in vision_updates:
+            # Prioritize LL4
+            if name == "limelight-right":
+                best_pose = pose
+                break
+            best_pose = pose
 
         if best_pose is not None:
-            # Reset the drivetrain odometry to the vision pose
-            # This 'seeds' the Pigeon 2 by setting its rotation to match the pose
+            # This forces the Pigeon to the rotation calculated by the AprilTag
             self.reset_pose(best_pose)
-            print(f"Pigeon seeded successfully with {best_pose.rotation().degrees():.2f}°")
+            print(f"Pigeon SEEDED with MT1: {best_pose.rotation().degrees():.2f}°")
         else:
-            print("Pigeon seeding failed: No clear tags visible.")
+            print("Seeding failed: No MT1 data available.")
 
 
 

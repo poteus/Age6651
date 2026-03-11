@@ -5,10 +5,12 @@ import ntcore # NetworkTables to talk to Limelights
 
 class Vision:
     def __init__(self, limelight_names):
+        
         self.inst = ntcore.NetworkTableInstance.getDefault()
         self.subscribers = {}
         self.limelight_names = limelight_names
         self.orientation_publishers = {}
+        self.mt1_subscribers = {}
         self.mode_publishers = {}
 
         for name in limelight_names:
@@ -19,11 +21,27 @@ class Vision:
             # Create and store the publisher so it doesn't get garbage collected
             self.mode_publishers[name] = table.getIntegerTopic("imumode_set").publish()
 
+            # Subscribe to the MT1 topic specifically for seeding
+            self.mt1_subscribers[name] = table.getFloatArrayTopic("botpose_orb_wpiblue").subscribe([])
+
             # --- IMU MODE CONFIGURATION ---
             # Create a publisher for the imumode_set topic
             mode_pub = table.getIntegerTopic("imumode_set").publish()
             
         self.force_imu_modes()
+
+    def get_mt1_pose(self):
+        """Specifically returns the MegaTag 1 (Pure Vision) pose for seeding."""
+        updates = []
+        for name, sub in self.mt1_subscribers.items():
+            botpose = sub.get()
+            # MT1 array is usually shorter or formatted differently, 
+            # but usually contains 6 values [X, Y, Z, Roll, Pitch, Yaw]
+            if len(botpose) >= 6:
+                pose = Pose2d(botpose[0], botpose[1], Rotation2d.fromDegrees(botpose[5]))
+                # Use a dummy area since MT1 topics might not include it
+                updates.append((name, pose, 1.0)) 
+        return updates
 
     def force_imu_modes(self):
         """Forces cameras into their respective IMU modes"""
