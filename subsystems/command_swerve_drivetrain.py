@@ -13,6 +13,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
     Class that extends the Phoenix 6 SwerveDrivetrain class and implements
     Subsystem so it can easily be used in command-based projects.
     """
+    _PIGEON_SEEDED = False
 
     _SIM_LOOP_PERIOD: units.second = 0.005
 
@@ -235,6 +236,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         if utils.is_simulation():
             self._start_sim_thread()
 
+        self.seed_pigeon_with_vision()
+
     def apply_request(
         self, request: Callable[[], swerve.requests.SwerveRequest]
     ) -> Command:
@@ -311,6 +314,9 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         Grabs the current vision pose and 'seeds' the Pigeon 2
         so the robot heading matches the field map.
         """
+        if self._PIGEON_SEEDED:
+            return
+        
         if not hasattr(self, "vision") or not self.vision:
             return
 
@@ -328,6 +334,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             # This forces the Pigeon to the rotation calculated by the AprilTag
             self.reset_pose(best_pose)
             print(f"Pigeon SEEDED with MT1: {best_pose.rotation().degrees():.2f}°")
+            self._PIGEON_SEEDED = True
         else:
             print("Seeding failed: No MT1 data available.")
 

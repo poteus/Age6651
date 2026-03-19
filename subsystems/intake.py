@@ -64,7 +64,7 @@ class Intake(commands2.Subsystem):
 
         # Soft Limits act as a "virtual" wall before the physical switch
         # If your 90 deg switch is at 0.25 rotations, set soft limit to 0.24
-        self.shoulder_config.softLimit.forwardSoftLimit(0.24)
+        self.shoulder_config.softLimit.forwardSoftLimit(0.34)
         self.shoulder_config.softLimit.forwardSoftLimitEnabled(True)
         
         self.shoulder_config.softLimit.reverseSoftLimit(0.01)

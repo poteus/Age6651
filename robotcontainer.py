@@ -49,7 +49,7 @@ class RobotContainer:
         # ----------------------------------------------------------------------------------------------------
 
         # Limelight Initialization
-        # self.vision = Vision(["limelight-right", "limelight-back"])
+        self.vision = Vision(["limelight-right", "limelight-back"])
 
         # Subsystem Drive System Initialization ----------------------------------------------------------------------------------------
         self.drivetrain = TunerConstants.create_drivetrain()
@@ -78,7 +78,7 @@ class RobotContainer:
         self.shooter = Shooter(self._logger)
         self.indexer = Indexer(self.shooter)
         self.intake = Intake()
-        self.turret = Turret(self.team_color, self._logger)
+        self.turret = Turret(self._logger)
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -163,6 +163,26 @@ class RobotContainer:
         )
         # ------------------------------------------------------------------------------------------------------
 
+        # testing
+
+        # self._joystick.povLeft().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.turret.set_position(.75), self.turret)  # Placeholder angle for "left"
+        # )
+
+        # self._joystick.povRight().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.turret.set_position(.25), self.turret)  # Placeholder angle for "right"
+        # )
+
+        # self._joystick.povUp().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.turret.set_position(0.1), self.turret)  # Placeholder angle for "right"
+        # )
+
+        # self._joystick.povDown().whileTrue(
+        #     commands2.cmd.runOnce(lambda: self.turret.set_position(0.5), self.turret)  # Placeholder angle for "right"
+        # )
+
+
+
         # self._joystick.leftBumper().whileTrue(
         #     commands2.cmd.run(
         #         lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
@@ -195,14 +215,6 @@ class RobotContainer:
         )
         (self._joystick.start() & self._joystick.x()).whileTrue(
             self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
-        )
-
-        self._joystick.povLeft().whileTrue(
-            commands2.cmd.runOnce(lambda: self.turret.aim_at_angle(40), self.turret)  # Placeholder angle for "left"
-        )
-
-        self._joystick.povRight().whileTrue(
-            commands2.cmd.runOnce(lambda: self.turret.aim_at_angle(-15), self.turret)  # Placeholder angle for "right"
         )
 
         self.drivetrain.register_telemetry(

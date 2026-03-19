@@ -12,8 +12,8 @@ class Turret(commands2.Subsystem):
     The turret subsystem controls the yaw of the shooter (subsystems.shooter)
     '''
 
-    LOWER_LIMIT = -0.08013
-    UPPER_LIMIT = 0.246335
+    LOWER_LIMIT = 0
+    UPPER_LIMIT = 1
     blue_hub = Pose2d(0.0, 5.5, 0.0) # Update coordinates based on Alliance
     red_hub = Pose2d(16.54, 8.02, 0.0) # Update coordinates based on Alliance
     top_blue_corner = Pose2d(0.0, 8.02, 0.0) # Update coordinates based on Alliance
@@ -21,12 +21,14 @@ class Turret(commands2.Subsystem):
     bottom_blue_corner = Pose2d(0.0, 0.0, 0.0) # Update coordinates based on Alliance
     bottom_red_corner = Pose2d(16.54, 8.02, 0.0) # Update coordinates based on Alliance
 
-    def __init__(self, _team_color: DriverStation.Alliance, _telemetry: Telemetry):
+    def __init__(self, _telemetry: Telemetry):
         super().__init__()
 
         # Team Color and Hub Position Initialization --------------------------------------------------------------------------------
         self.TEAM_COLOR: str = ""
         self.HUB_POSITION: Translation2d = Translation2d(0.0, 0.0)
+
+        _team_color = DriverStation.getAlliance()
 
         if _team_color == DriverStation.Alliance.kRed:
             self.TEAM_COLOR = "Red"
@@ -105,16 +107,34 @@ class Turret(commands2.Subsystem):
         self.position_request = controls.MotionMagicVoltage(0)
         self.voltage_request = controls.VoltageOut(0)
 
-        # SEED THE MOTOR POSITION
-        initial_pos = self.abs_encoder.get_absolute_position().refresh().value
-        self.motor.set_position(initial_pos)
+        # The 'Magic Number' to align your -0.3 reading to a 0.75 turret position
+        # (Target Laps * Ratio) - Current Reading 
+        # 0.75 - (-0.3/10) = 0.75 - (-0.03) = 0.75 + 0.03 = 0.78
+        SENSOR_OFFSET = 0.78
+
+        # 1. Get the current reading from the absolute encoder
+        # This is currently -0.3
+        raw_abs_val = self.abs_encoder.get_absolute_position().refresh().value
+
+        # 2. Calculate the seeded value
+        # -0.03 + 0.78 = 0.75
+        seeded_value = raw_abs_val/10 + SENSOR_OFFSET
+
+        # 3. Seed the Motor
+        # Since your motor also has a 10:1 ratio set in its config,
+        # setting it to 0.75 rotations will correctly represent 0.75 Turret Laps.
+        self.motor.set_position(seeded_value)
 
     def set_position(self, rotations: float):
         """Sets turret position (0.0 to 1.0 represents 0 to 360 degrees)"""
-        if self.LOWER_LIMIT <= rotations:
+
+        # print(rotations, rotations * 360)
+
+        if self.LOWER_LIMIT > rotations:
             rotations = self.LOWER_LIMIT
-        elif rotations <= self.UPPER_LIMIT:
+        elif rotations > self.UPPER_LIMIT:
             rotations = self.UPPER_LIMIT
+
         self.motor.set_control(self.position_request.with_position(rotations))
 
     def stop(self):
@@ -172,8 +192,8 @@ class Turret(commands2.Subsystem):
         rotation_aim = target_angle_degrees / 360.0
         
         # Normalize to [-0.5, 0.5] range (i.e., -180 to 180 degrees)
-        while rotation_aim > 0.5: rotation_aim -= 1
-        while rotation_aim < -0.5: rotation_aim += 1
+        while rotation_aim > 1: rotation_aim -= 1
+        while rotation_aim < 0: rotation_aim += 1
         
         # Checks if the target is on the corret side of the robot and within the soft limits before moving
         if self.LOWER_LIMIT <= rotation_aim <= self.UPPER_LIMIT:
@@ -228,6 +248,9 @@ class Turret(commands2.Subsystem):
         current_robot_pose: Pose2d = self.telemetry._drive_pose_subscriber.get()
         y_location = current_robot_pose.translation().y
         x_location = current_robot_pose.translation().x
+
+        self.telemetry._turret_rotation_pub.set(self.motor.get_position().value)
+        self.telemetry._turret_encoder_pub.set(self.abs_encoder.get_absolute_position().value)
 
         if self.TEAM_COLOR == "Blue":
             if y_location < 4.0: # If we are on the Blue side

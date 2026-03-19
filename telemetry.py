@@ -100,6 +100,20 @@ class Telemetry:
         self._target_rot_pub = self._target_rot_topic.publish()
         self._target_rot_pub.set(40.0)
 
+        # Turret --------------------------------
+        self._turret_table = self._inst.getTable("Turret")
+        self._turret_rotation_topic = self._turret_table.getDoubleTopic("Turret Rotations")
+        self._turret_rotation_sub = self._turret_rotation_topic.subscribe(0.75) # Default 0.75 rotations
+
+        self._turret_encoder_topic = self._turret_table.getDoubleTopic("Turret Encoder Rotations")
+        self._turret_encoder_sub = self._turret_encoder_topic.subscribe(-0.3) # Default -0.3 rotations
+
+        self._turret_rotation_pub = self._turret_rotation_topic.publish()
+        self._turret_rotation_pub.set(0.75)
+
+        self._turret_encoder_pub = self._turret_encoder_topic.publish()
+        self._turret_encoder_pub.set(-0.3)
+
 
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
@@ -113,6 +127,7 @@ class Telemetry:
         self._drive_module_positions.set(state.module_positions)
         self._drive_timestamp.set(state.timestamp)
         self._drive_odometry_frequency.set(1.0 / state.odometry_period)
+        
 
         # Also write to log file
         pose_array = [state.pose.x, state.pose.y, state.pose.rotation().degrees()]
@@ -142,8 +157,6 @@ class Telemetry:
             self._module_speeds[i].setAngle(module_state.angle.degrees())
             self._module_directions[i].setAngle(module_state.angle.degrees())
             self._module_speeds[i].setLength(module_state.speed / (2 * self._max_speed))
-
-        # Read Shooter
 
        
         # Getter method so the robot code can ask for the current value

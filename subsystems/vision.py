@@ -5,7 +5,7 @@ import ntcore # NetworkTables to talk to Limelights
 
 class Vision:
     def __init__(self, limelight_names):
-        
+
         self.inst = ntcore.NetworkTableInstance.getDefault()
         self.subscribers = {}
         self.limelight_names = limelight_names
