@@ -50,8 +50,8 @@ class Intake(commands2.Subsystem):
 
         # --- Limit Switch Setup ---
         # 0 Degrees (Inside) is Reverse, 90 Degrees (Bumper) is Forward
-        # self.shoulder_config.limitSwitch.reverseLimitSwitchEnabled(True)
-        # self.shoulder_config.limitSwitch.reverseLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyOpen)
+        self.shoulder_config.limitSwitch.reverseLimitSwitchEnabled(True)
+        self.shoulder_config.limitSwitch.reverseLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyClosed)
         
         # When reverse limit switch is reached, it stops the motors and set encoder position to 0.
         # self.shoulder_config.limitSwitch.reverseLimitSwitchTriggerBehavior( # type: ignore
@@ -59,8 +59,8 @@ class Intake(commands2.Subsystem):
         # )
         # self.shoulder_config.limitSwitch.reverseLimitSwitchPosition(0.0)
         
-        # self.shoulder_config.limitSwitch.forwardLimitSwitchEnabled(True)
-        # self.shoulder_config.limitSwitch.forwardLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyOpen)
+        self.shoulder_config.limitSwitch.forwardLimitSwitchEnabled(True)
+        self.shoulder_config.limitSwitch.forwardLimitSwitchType(rev.LimitSwitchConfig.Type.kNormallyClosed)
 
         # Soft Limits act as a "virtual" wall before the physical switch
         # If your 90 deg switch is at 0.25 rotations, set soft limit to 0.24
@@ -75,7 +75,8 @@ class Intake(commands2.Subsystem):
         # kV = 0.13267
         # kA = 0.0068033
         # kP = 0.00026339
-        self.shoulder_config.closedLoop.P(2).I(0).D(0.1)    #.velocityFF(0.016)
+        self.shoulder_config.closedLoop.P(2
+                                          ).I(0).D(0.1)    #.velocityFF(0.016)
         self.shoulder_config.closedLoop.feedForward.kS(0.2).kG(0.4).kV(0.16)
         self.shoulder_config.IdleMode(SparkMaxConfig.IdleMode.kCoast)
 
@@ -119,26 +120,11 @@ class Intake(commands2.Subsystem):
         ''' Set the shoulder to a specific position in rotations. 0 rotations is the "home" position, and positive rotations are clockwise.
         '''
         requested_position = rotations
-        print("attempting to set shoulder position")
         if requested_position != self.last_shoulder_position:
-            print("method passed")
-
 
             self.shoulder_loop.setReference(rotations, SparkMax.ControlType.kPosition)
-
+            
             self.last_shoulder_position = requested_position
-
-    def send_down(self):
-        if self.shoulder.getEncoder().getPosition() < .3:
-            self.shoulder.set(.1)
-        else:
-            self.stop()
-    
-    def send_up(self):
-        if self.shoulder.getEncoder().getPosition() > .05:
-            self.shoulder.set(-.1)
-        else:
-            self.stop()
             
     def set_intake_dutyCycle(self, DC: float):
         '''Set the DutyCycle for the Intake Motor. DC should be between -1.0 and 1.0, where 1.0 is full forward and -1.0 is full reverse.

@@ -121,6 +121,7 @@ class Turret(commands2.Subsystem):
         # Since your motor also has a 10:1 ratio set in its config,
         # setting it to 0.75 rotations will correctly represent 0.75 Turret Laps.
         self.motor.set_position(seeded_value)
+        self.set_position(.75)
 
     def set_position(self, rotations: float):
         """Sets turret position (0.0 to 1.0 represents 0 to 360 degrees)"""
@@ -247,6 +248,17 @@ class Turret(commands2.Subsystem):
 
         self.telemetry._turret_rotation_pub.set(self.motor.get_position().value)
         self.telemetry._turret_encoder_pub.set(self.abs_encoder.get_absolute_position().value)
+
+        # team = None
+
+        # if DriverStation.Alliance.kBlue: 
+        #     team = self.blue_hub
+        # else:
+        #     team = self.red_hub
+
+        # distance_to_hub = math.dist(current_robot_pose, team)
+
+
 
         # if self.TEAM_COLOR == "Blue":
         #     if x_location < 3.5: 

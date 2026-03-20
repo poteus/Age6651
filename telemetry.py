@@ -116,6 +116,19 @@ class Telemetry:
         self._turret_encoder_pub = self._turret_encoder_topic.publish()
         self._turret_encoder_pub.set(-0.3)
 
+        # Distance to team ----------------------
+        self._distance_table = self._inst.getTable("Distances")
+        self._distance_to_blue_topic = self._distance_table.getDoubleArrayTopic("Distance to blue hub")
+        self._distance_to_blue_sub = self._distance_to_blue_topic.subscribe(0.0)
+
+        self._distance_to_red_topic = self._distance_table.getDoubleArrayTopic("Distance to red hub")
+        self._distance_to_red_sub = self._distance_to_red_topic.subscribe(0.0)
+
+        self._distance_to_blue_pub = self._distance_to_blue_topic.publish(0.0)
+        self._distance_to_blue_pub.set(0.0)
+
+        self._distance_to_red_pub = self._distance_to_red_topic.publish(0.0)
+        self._distance_to_red_pub.set(0.0)
 
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """

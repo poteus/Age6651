@@ -51,11 +51,13 @@ class RobotContainer:
         # Limelight Initialization
         self.vision = Vision(["limelight-right", "limelight-back"])
 
+        test = self.vision.get_mt1_pose()
+        print(test)
+
         # Subsystem Drive System Initialization ----------------------------------------------------------------------------------------
         self.drivetrain = TunerConstants.create_drivetrain()
 
-        self.drivetrain.pigeon2.
-        # self.drivetrain.vision = self.vision
+        self.drivetrain.vision = self.vision
 
         # Setting up bindings for necessary control of the swerve drive platform
         self._drive = (
