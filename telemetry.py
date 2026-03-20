@@ -1,6 +1,7 @@
 from ntcore import NetworkTableInstance
 from phoenix6 import SignalLogger, swerve, units
-from wpilib import Color, Color8Bit, Mechanism2d, MechanismLigament2d, SmartDashboard
+import math
+from wpilib import Color, Color8Bit, Mechanism2d, MechanismLigament2d, SmartDashboard, DriverStation
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModulePosition, SwerveModuleState
 
@@ -13,6 +14,10 @@ class Telemetry:
         :type max_speed: units.meters_per_second
         """
         self._max_speed = max_speed
+
+        self.blue_hub = Pose2d(0.0, 5.5, 0.0) # Update coordinates based on Alliance
+        self.red_hub = Pose2d(16.55, 8.05, 0.0) # Update coordinates based on Alliance
+
         SignalLogger.start()
 
         # What to publish over networktables for telemetry
@@ -20,7 +25,7 @@ class Telemetry:
 
         # Robot swerve drive state
         self._drive_state_table = self._inst.getTable("DriveState")
-        self._drive_pose = self._drive_state_table.getStructTopic("Pose", Pose2d).publish()
+        self._drive_pose : Pose2d = self._drive_state_table.getStructTopic("Pose", Pose2d).publish()
         self._drive_pose_subscriber = self._drive_state_table.getStructTopic("Pose", Pose2d).subscribe(Pose2d(0.0, 0.0, 0.0)) # Default pose at origin
         self._drive_speeds = self._drive_state_table.getStructTopic("Speeds", ChassisSpeeds).publish()
         self._drive_module_states = self._drive_state_table.getStructArrayTopic("ModuleStates", SwerveModuleState).publish()
@@ -118,16 +123,16 @@ class Telemetry:
 
         # Distance to team ----------------------
         self._distance_table = self._inst.getTable("Distances")
-        self._distance_to_blue_topic = self._distance_table.getDoubleArrayTopic("Distance to blue hub")
+        self._distance_to_blue_topic = self._distance_table.getDoubleTopic("Distance to blue hub")
         self._distance_to_blue_sub = self._distance_to_blue_topic.subscribe(0.0)
 
-        self._distance_to_red_topic = self._distance_table.getDoubleArrayTopic("Distance to red hub")
+        self._distance_to_red_topic = self._distance_table.getDoubleTopic("Distance to red hub")
         self._distance_to_red_sub = self._distance_to_red_topic.subscribe(0.0)
 
-        self._distance_to_blue_pub = self._distance_to_blue_topic.publish(0.0)
+        self._distance_to_blue_pub = self._distance_to_blue_topic.publish()
         self._distance_to_blue_pub.set(0.0)
 
-        self._distance_to_red_pub = self._distance_to_red_topic.publish(0.0)
+        self._distance_to_red_pub = self._distance_to_red_topic.publish()
         self._distance_to_red_pub.set(0.0)
 
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
@@ -142,7 +147,17 @@ class Telemetry:
         self._drive_module_positions.set(state.module_positions)
         self._drive_timestamp.set(state.timestamp)
         self._drive_odometry_frequency.set(1.0 / state.odometry_period)
+
+        # if self._drive_pose 
+        blue_hub = Pose2d(4.625, 4.034, 0.0) # Update coordinates based on Alliance
+        red_hub = Pose2d(11.915, 4.034, 0.0) # Update coordinates based on Alliance
+
+        pose1 = (state.pose.X(), state.pose.Y())
+        pose2 = (blue_hub.X(), blue_hub.Y())
+        pose3 = (red_hub.X(), red_hub.Y())
         
+        self._distance_to_blue_pub.set(math.dist(pose1, pose2))
+        self._distance_to_red_pub.set(math.dist(pose1, pose3))
 
         # Also write to log file
         pose_array = [state.pose.x, state.pose.y, state.pose.rotation().degrees()]

@@ -128,7 +128,7 @@ class Indexer(commands2.Subsystem):
     def run(self):
         ''' Starts the indexer and the hopper (ChakaChaka Bum Bum)'''
         self.set_velocity(40)
-        self.set_duty_cycle_hopper(.4)
+        self.set_duty_cycle_hopper(.6)
         #self.chakachaka()
 
     def stop_all(self):

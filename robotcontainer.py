@@ -146,16 +146,16 @@ class RobotContainer:
         
         # Shoulder Bindings -----------------------------------------------------------------------------------------
         
-        # Left Trigger -> Lower Intake
-        self._joystick.a().whileTrue(
+        # Y -> Raise Intake
+        self._joystick.y().whileTrue(
             commands2.cmd.run(
                 lambda: self.intake.set_shoulder_position(0), self.intake)
         )
 
-        # Left Bumper -> Raise Intake
-        self._joystick.y().whileTrue(
+        # A -> Lower Intake
+        self._joystick.a().whileTrue(
             commands2.cmd.run(
-                lambda: self.intake.set_shoulder_position(0.3), self.intake)
+                lambda: self.intake.set_shoulder_position(0.35), self.intake)
         )
         # ------------------------------------------------------------------------------------------------------
 

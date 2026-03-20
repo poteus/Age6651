@@ -129,6 +129,8 @@ class Intake(commands2.Subsystem):
     def set_intake_dutyCycle(self, DC: float):
         '''Set the DutyCycle for the Intake Motor. DC should be between -1.0 and 1.0, where 1.0 is full forward and -1.0 is full reverse.
         '''
+
+        self.shoulder.stopMotor()
         if DC > 1.0:
             DC = 1.0
         elif DC < -1.0:

@@ -28,8 +28,6 @@ class Turret(commands2.Subsystem):
 
         # Team Color and Hub Position Initialization --------------------------------------------------------------------------------
         self.TEAM_COLOR: str = ""
-        self.HUB_POSITION: Pose2d = Pose2d(0, 0, 0)
-
         _team_color = DriverStation.getAlliance()
 
         if _team_color == DriverStation.Alliance.kRed:

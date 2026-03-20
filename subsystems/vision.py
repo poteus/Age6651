@@ -47,7 +47,7 @@ class Vision:
         """Forces cameras into their respective IMU modes"""
         for name, pub in self.mode_publishers.items():
             if name == "limelight-right":
-                pub.set(2) # Mode 2: Internal + External Fusion (LL4)
+                pub.set(1) # Mode 2: Internal + External Fusion (LL4)
             else:
                 pub.set(1) # Mode 1: External IMU only (LL3)
 
