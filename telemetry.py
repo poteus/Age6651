@@ -100,6 +100,8 @@ class Telemetry:
         self._target_rot_pub = self._target_rot_topic.publish()
         self._target_rot_pub.set(40.0)
 
+        self._actual_rot_pub = self._shooter_table.getDoubleTopic("ActualRot").publish()
+
         # Turret --------------------------------
         self._turret_table = self._inst.getTable("Turret")
         self._turret_rotation_topic = self._turret_table.getDoubleTopic("Turret Rotations")
@@ -166,6 +168,7 @@ class Telemetry:
     def get_target_hood_rot(self) -> float:
         return self._target_rot_sub.get()
     
-    def set_actual_shooter_rps(self, rps: float):
+    def set_actual_values(self, rps: float, rotation: float):
         """Publishes the real-time speed of the shooter to the dashboard."""
         self._actual_rps_pub.set(rps)
+        self._actual_rot_pub.set(rotation)

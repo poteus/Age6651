@@ -4,7 +4,7 @@ from phoenix6 import hardware, configs, signals, controls
 from wpilib import SmartDashboard, DriverStation
 from wpimath.units import seconds
 import math
-from wpimath.geometry import Pose2d, Translation2d
+from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from telemetry import Telemetry
 
 class Turret(commands2.Subsystem):
@@ -14,6 +14,8 @@ class Turret(commands2.Subsystem):
 
     LOWER_LIMIT = 0
     UPPER_LIMIT = 1
+
+
     blue_hub = Pose2d(0.0, 5.5, 0.0) # Update coordinates based on Alliance
     red_hub = Pose2d(16.55, 8.05, 0.0) # Update coordinates based on Alliance
     top_blue_corner = Pose2d(0.0, 8.05, 0.0) # Update coordinates based on Alliance
@@ -26,7 +28,7 @@ class Turret(commands2.Subsystem):
 
         # Team Color and Hub Position Initialization --------------------------------------------------------------------------------
         self.TEAM_COLOR: str = ""
-        self.HUB_POSITION: Pose2d = Pose2d(0.0, 0.0)
+        self.HUB_POSITION: Pose2d = Pose2d(0, 0, 0)
 
         _team_color = DriverStation.getAlliance()
 
@@ -35,9 +37,6 @@ class Turret(commands2.Subsystem):
 
         else: # Blue is default just in case
             self.TEAM_COLOR = "Blue"
-
-        self.team_positions_table = self.position[self.TEAM_COLOR]
-        self.HUB_POSITION = self.team_positions_table["hub"]
 
         self.location_state = 1 # 1 is alliance color and current alliance region the same, 0 is neutral, -1 is the opposing team.
         # ---------------------------------------------------------------------------------------------------------------------------
@@ -241,7 +240,6 @@ class Turret(commands2.Subsystem):
     def periodic(self):
         """ Placeholder for autorotation, Aim at hub or team corners depending on the position of the robot on the field.
         If on the opposing team's side, aim for our team's corner. If on our side/neutral zone, aim for our hub. """
-
         
         current_robot_pose: Pose2d = self.telemetry._drive_pose_subscriber.get()
         x_location = current_robot_pose.translation().x
@@ -250,58 +248,58 @@ class Turret(commands2.Subsystem):
         self.telemetry._turret_rotation_pub.set(self.motor.get_position().value)
         self.telemetry._turret_encoder_pub.set(self.abs_encoder.get_absolute_position().value)
 
-        if self.TEAM_COLOR == "Blue":
-            if x_location < 3.5: 
-                # If we are on the team side
+        # if self.TEAM_COLOR == "Blue":
+        #     if x_location < 3.5: 
+        #         # If we are on the team side
                 
-                self.aim_to_position(self.team_positions_table["hub"], current_robot_pose) # Aim at our corner (Update coordinates)
-                self.location_state == 1
+        #         self.aim_to_position(self.blue_hub, current_robot_pose) # Aim at our corner (Update coordinates)
+        #         self.location_state == 1
 
-            if 3.5 < x_location < 13.0:
-                # If we are in the neutral zone
+        #     if 3.5 < x_location < 13.0:
+        #         # If we are in the neutral zone
 
-                if y_location > 4.0: 
-                    self.aim_to_position(self.team_positions_table["top_corner"], current_robot_pose)
-                else:
-                    self.aim_to_position(self.team_positions_table["bottom_corner"], current_robot_pose)
+        #         if y_location > 4.0: 
+        #             self.aim_to_position(self.top_blue_corner, current_robot_pose)
+        #         else:
+        #             self.aim_to_position(self.bottom_blue_corner, current_robot_pose)
                 
-                self.location_state == 0
+        #         self.location_state == 0
 
-            if x_location > 13.0: 
-                # If we are on the opposite side
+        #     if x_location > 13.0: 
+        #         # If we are on the opposite side
 
-                if y_location > 4.0: 
-                    self.aim_to_position(self.team_positions_table["top_corner"], current_robot_pose)
-                else:
-                    self.aim_to_position(self.team_positions_table["bottom_corner"], current_robot_pose)
+        #         if y_location > 4.0: 
+        #             self.aim_to_position(self.top_blue_corner, current_robot_pose)
+        #         else:
+        #             self.aim_to_position(self.bottom_blue_corner, current_robot_pose)
                 
-                self.location_state == -1
-        else:
-            if x_location > 13.0: 
-                # If we are on the team side
+        #         self.location_state == -1
+        # else:
+        #     if x_location > 13.0: 
+        #         # If we are on the team side
 
-                self.aim_to_position(self.team_positions_table["hub"], current_robot_pose) # Aim at our corner (Update coordinates)
-                self.location_state == 1
+        #         self.aim_to_position(self.red_hub, current_robot_pose) # Aim at our corner (Update coordinates)
+        #         self.location_state == 1
 
-            if 3.5 < x_location < 13.0:
-                # If we are in the neutral zone
+        #     if 3.5 < x_location < 13.0:
+        #         # If we are in the neutral zone
 
-                if y_location > 4.0: 
-                    self.aim_to_position(self.team_positions_table["top_corner"], current_robot_pose)
-                else:
-                    self.aim_to_position(self.team_positions_table["bottom_corner"], current_robot_pose)
+        #         if y_location > 4.0: 
+        #             self.aim_to_position(self.top_red_corner, current_robot_pose)
+        #         else:
+        #             self.aim_to_position(self.bottom_red_corner, current_robot_pose)
                 
-                self.location_state == 0
+        #         self.location_state == 0
                 
-            if x_location < 3.5: 
-                # If we are on the opposite side
+        #     if x_location < 3.5: 
+        #         # If we are on the opposite side
                 
-                if y_location > 4.0: 
-                    self.aim_to_position(self.team_positions_table["top_corner"], current_robot_pose)
-                else:
-                    self.aim_to_position(self.team_positions_table["bottom_corner"], current_robot_pose)
+        #         if y_location > 4.0: 
+        #             self.aim_to_position(self.top_red_corner, current_robot_pose)
+        #         else:
+        #             self.aim_to_position(self.bottom_red_corner, current_robot_pose)
                 
-                self.location_state == -1
+        #         self.location_state == -1
 
 
            

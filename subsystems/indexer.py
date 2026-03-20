@@ -94,7 +94,7 @@ class Indexer(commands2.Subsystem):
 
         # Hopper Configuration -----------------------------------
         self.hopper_config = SparkMaxConfig()
-        self.hopper_config.inverted(True)
+        self.hopper_config.inverted(False)
 
         # Apply configuration to both motors
         self.hopper.configure(
@@ -108,10 +108,10 @@ class Indexer(commands2.Subsystem):
 
     def set_duty_cycle_hopper(self, DC: float):
         ''' Sets Duty Cycle to Hopper motor '''
-        if DC > .2:
-            DC = .2
-        elif DC < -.2:
-            DC =-.2
+        if DC > .4:
+            DC = .4
+        elif DC < -.4:
+            DC =-.4
 
         self.hopper.set(DC)
 
@@ -128,7 +128,8 @@ class Indexer(commands2.Subsystem):
     def run(self):
         ''' Starts the indexer and the hopper (ChakaChaka Bum Bum)'''
         self.set_velocity(40)
-        self.chakachaka()
+        self.set_duty_cycle_hopper(.4)
+        #self.chakachaka()
 
     def stop_all(self):
         ''' Stop indexer and hopper '''

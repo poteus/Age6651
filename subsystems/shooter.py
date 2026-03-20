@@ -24,6 +24,8 @@ class Shooter(commands2.Subsystem):
         super().__init__()
         self.telemetry = _telemetry
 
+        self.abs_encoder = hardware.CANcoder(7)
+
         # Flywheel Setup (Kraken X60 - CAN ID 16) ---
         self.flywheel = hardware.TalonFX(16)
         fw_cfg = configs.TalonFXConfiguration()
@@ -48,7 +50,7 @@ class Shooter(commands2.Subsystem):
         self.hood = hardware.TalonFX(17)
         hood_cfg = configs.TalonFXConfiguration()
 
-        hood_cfg.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE # or COUNTER_CLOCKWISE_POSITIVE
+        hood_cfg.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         hood_cfg.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         
         hood_cfg.feedback.sensor_to_mechanism_ratio = self.HOOD_GEAR_RATIO
@@ -80,6 +82,28 @@ class Shooter(commands2.Subsystem):
         
         self.hood.configurator.apply(hood_cfg)
 
+
+
+        # Seed encoder of hood
+        # The 'Magic Number' to align your -0.391 reading to a 0 hood position
+        # (Target Laps * Ratio) - Current Reading 
+        # (-0.391*5)
+        SENSOR_OFFSET = -0.391
+
+        # 1. Get the current reading from the absolute encoder
+        # This is currently -0.391
+        raw_abs_val = self.abs_encoder.get_absolute_position().refresh().value
+
+        # 2. Calculate the seeded value
+        # -0.03 + 0.78 = 0.75
+        seeded_value = raw_abs_val - SENSOR_OFFSET
+
+        # 3. Seed the Motor
+        # Since your motor also has a 10:1 ratio set in its config,
+        # setting it to 0.75 rotations will correctly represent 0.75 Turret Laps.
+        self.hood.set_position(0)
+
+
         # Torque Control Requests ---
         # FOC (Field Oriented Control) provides the most efficient torque
         self.fw_torque_request_vel = controls.VelocityTorqueCurrentFOC(0)
@@ -94,8 +118,14 @@ class Shooter(commands2.Subsystem):
         # --- Data Points for Tuning ---
         # Format: (Distance in Meters, Flywheel RPS, Hood Rotations)
         self.tuning_table = [
-            (1.0, 50.0, 0.00), # Close
-            (2, 55.0, 0.023)
+            (44.0, 40.0, 0.0), # Close
+            (56.0, 43.0, 0.0),
+            (68, 45, 0),
+            (68, 38, 0.05),
+            (53.5, 35, 0.02),
+            (87, 39, .06),
+            (125, 44, .07),
+            (163, 46, .08)
         ]
         
     # --- Methods ---
@@ -183,7 +213,8 @@ class Shooter(commands2.Subsystem):
     def periodic(self) -> None:
         # Get the real speed from the Kraken.velocity returns rotations per second
         actual_rps = self.flywheel.get_velocity().value
+        actual_rotation = self.hood.get_position().value
         
         # Send it to your telemetry object
-        self.telemetry.set_actual_shooter_rps(actual_rps)
+        self.telemetry.set_actual_values(actual_rps, actual_rotation)
         

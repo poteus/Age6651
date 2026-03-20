@@ -331,6 +331,8 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
             best_pose = pose
 
         if best_pose is not None:
+            angle = 0 if DriverStation.getAlliance() == DriverStation.Alliance.kBlue else 180
+            best_pose = (best_pose.x().value, best_pose.y().value, angle)
             # This forces the Pigeon to the rotation calculated by the AprilTag
             self.reset_pose(best_pose)
             print(f"Pigeon SEEDED with MT1: {best_pose.rotation().degrees():.2f}°")

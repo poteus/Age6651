@@ -53,6 +53,8 @@ class RobotContainer:
 
         # Subsystem Drive System Initialization ----------------------------------------------------------------------------------------
         self.drivetrain = TunerConstants.create_drivetrain()
+
+        self.drivetrain.pigeon2.
         # self.drivetrain.vision = self.vision
 
         # Setting up bindings for necessary control of the swerve drive platform
@@ -117,19 +119,11 @@ class RobotContainer:
             self.drivetrain.apply_request(lambda: idle).ignoringDisable(True)
         )
 
-        self._joystick.a().whileTrue(self.drivetrain.apply_request(lambda: self._brake))
-        self._joystick.b().whileTrue(
-            self.drivetrain.apply_request(
-                lambda: self._point.with_module_direction(
-                    Rotation2d(-self._joystick.getLeftY(), -self._joystick.getLeftX())
-                )
-            )
-        )
         # -----------------------------------------------------------------------------------------------------------------------
         
         # Shooting and Intake Bindings ------------------------------------------------------------------------------------
 
-        # Right Trigger -> Shoot+Intake+Index
+        # Right Trigger -> Shoot+Intake+Index+ChakaChaka
         self._joystick.rightTrigger().whileTrue(
             commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
                 commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
@@ -139,7 +133,7 @@ class RobotContainer:
                     commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
                         commands2.cmd.runOnce(lambda:self.intake.stop())))
         
-        # Right Bumper -> Shoot+Indexer
+        # Right Bumper -> Shoot+Indexer+ChakaChaka
         self._joystick.rightBumper().whileTrue(
             commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
                 commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
@@ -151,15 +145,15 @@ class RobotContainer:
         # Shoulder Bindings -----------------------------------------------------------------------------------------
         
         # Left Trigger -> Lower Intake
-        self._joystick.leftTrigger().whileTrue(
+        self._joystick.a().whileTrue(
             commands2.cmd.run(
-                lambda: self.intake.set_shoulder_position(0.25))
+                lambda: self.intake.set_shoulder_position(0), self.intake)
         )
 
         # Left Bumper -> Raise Intake
-        self._joystick.leftBumper().whileTrue(
+        self._joystick.y().whileTrue(
             commands2.cmd.run(
-                lambda: self.intake.set_shoulder_position(0.0))
+                lambda: self.intake.set_shoulder_position(0.3), self.intake)
         )
         # ------------------------------------------------------------------------------------------------------
 
@@ -181,13 +175,11 @@ class RobotContainer:
         #     commands2.cmd.runOnce(lambda: self.turret.set_position(0.5), self.turret)  # Placeholder angle for "right"
         # )
 
-
-
-        # self._joystick.leftBumper().whileTrue(
-        #     commands2.cmd.run(
-        #         lambda: self.intake.set_velocity(40.0))  # Placeholder RPS value for intaking
-        # ).onFalse(commands2.cmd.run(lambda: self.intake.stop()
-        # ))
+        self._joystick.leftTrigger().whileTrue(
+            commands2.cmd.run(
+                lambda: self.intake.set_intake_dutyCycle(.4))  # Placeholder RPS value for intaking
+        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
+        ))
 
         # self._joystick.povUp().whileTrue(
         #     commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
@@ -204,18 +196,18 @@ class RobotContainer:
 
         # Run SysId routines when holding back/start and X/Y.
         # Note that each routine should be run exactly once in a single log.
-        (self._joystick.back() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.back() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
-        )
-        (self._joystick.start() & self._joystick.y()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
-        )
-        (self._joystick.start() & self._joystick.x()).whileTrue(
-            self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
-        )
+        # (self._joystick.back() & self._joystick.y()).whileTrue(
+        #     self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
+        # )
+        # (self._joystick.back() & self._joystick.x()).whileTrue(
+        #     self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
+        # )
+        # (self._joystick.start() & self._joystick.y()).whileTrue(
+        #     self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
+        # )
+        # (self._joystick.start() & self._joystick.x()).whileTrue(
+        #     self.drivetrain.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
+        # )
 
         self.drivetrain.register_telemetry(
             lambda state: self._logger.telemeterize(state)
