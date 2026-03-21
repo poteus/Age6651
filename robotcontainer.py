@@ -194,15 +194,6 @@ class RobotContainer:
         #     commands2.cmd.runOnce(lambda: self.turret.set_position(0.5), self.turret)  # Placeholder angle for "right"
         # )
 
-<<<<<<< HEAD
-        self._joystick.leftTrigger().whileTrue(
-            commands2.cmd.run(
-                lambda: self.intake.set_intake_dutyCycle())  # Placeholder RPS value for intaking
-        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
-        ))
-
-=======
->>>>>>> ccdfbe21b3a0c15edd065c5f167e84beb99fe65e
         # self._joystick.povUp().whileTrue(
         #     commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
         # )
