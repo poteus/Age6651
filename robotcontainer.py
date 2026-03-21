@@ -129,7 +129,7 @@ class RobotContainer:
         self._joystick.rightTrigger().whileTrue(
             commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
                 commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
-                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(.4), self.intake))
+                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(), self.intake))
         ).onFalse(commands2.cmd.runOnce(
                 lambda:self.shooter.stop(), self.shooter).alongWith(
                     commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
@@ -142,6 +142,23 @@ class RobotContainer:
         ).onFalse(commands2.cmd.runOnce(
                 lambda:self.shooter.stop(), self.shooter).alongWith(
                     commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)))
+        
+        # Left Trigger -> Intake only
+        self._joystick.leftTrigger().whileTrue(
+            commands2.cmd.run(
+                lambda: self.intake.set_intake_dutyCycle())  # Placeholder RPS value for intaking
+        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
+        ))
+
+        # Left Bumper -> Shoot using distance
+        self._joystick.leftBumper().whileTrue(
+            commands2.cmd.run(
+                lambda: self.shooter.shoot_with_distance(), self.shooter)
+        ).onFalse(
+            commands2.cmd.run(
+                lambda: self.shooter.stop(), self.shooter)
+        )
+
         # ------------------------------------------------------------------------------------------------------
         
         # Shoulder Bindings -----------------------------------------------------------------------------------------
@@ -177,12 +194,6 @@ class RobotContainer:
         #     commands2.cmd.runOnce(lambda: self.turret.set_position(0.5), self.turret)  # Placeholder angle for "right"
         # )
 
-        self._joystick.leftTrigger().whileTrue(
-            commands2.cmd.run(
-                lambda: self.intake.set_intake_dutyCycle(.4))  # Placeholder RPS value for intaking
-        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
-        ))
-
         # self._joystick.povUp().whileTrue(
         #     commands2.cmd.runOnce(lambda: self.intake.set_shoulder_position(0))  # Placeholder position for "up"
         # )
@@ -195,7 +206,7 @@ class RobotContainer:
         # Using Left Stick Click to Start and Right Stick Click to Stop
         self._joystick.leftStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.start()))
         self._joystick.rightStick().onTrue(commands2.cmd.runOnce(lambda: SignalLogger.stop()))
-
+        
         # Run SysId routines when holding back/start and X/Y.
         # Note that each routine should be run exactly once in a single log.
         # (self._joystick.back() & self._joystick.y()).whileTrue(

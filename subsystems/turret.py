@@ -27,14 +27,10 @@ class Turret(commands2.Subsystem):
         super().__init__()
 
         # Team Color and Hub Position Initialization --------------------------------------------------------------------------------
-        self.TEAM_COLOR: str = ""
-        _team_color = DriverStation.getAlliance()
-
-        if _team_color == DriverStation.Alliance.kRed:
-            self.TEAM_COLOR = "Red"
-
-        else: # Blue is default just in case
-            self.TEAM_COLOR = "Blue"
+        if DriverStation.getAlliance() == DriverStation.Alliance.kBlue:
+            self.TEAM_COLOR = DriverStation.Alliance.kBlue
+        else:
+            self.TEAM_COLOR = DriverStation.Alliance.kRed
 
         self.location_state = 1 # 1 is alliance color and current alliance region the same, 0 is neutral, -1 is the opposing team.
         # ---------------------------------------------------------------------------------------------------------------------------
@@ -148,36 +144,36 @@ class Turret(commands2.Subsystem):
         ''' Calculates the angle to the hub and moves the turret. 
         Assumes 0 rotations = facing right (positive X) and positive rotations are counterclockwise. '''
 
-        # Vector from robot to hub (x,y)
-        target_vector = self.HUB_POSITION - robot_pose.translation()
+        # # Vector from robot to hub (x,y)
+        # target_vector = self.HUB_POSITION - robot_pose.translation()
         
-        # Field angle (0 is Right in your system, so we adjust WPILib's atan2)
-        # WPILib atan2: 0 is Forward (+X). 
-        # To make 0 "Right", we subtract 90 degrees.
-        target_field_angle = math.atan2(target_vector.y, target_vector.x) - (math.pi / 2)
+        # # Field angle (0 is Right in your system, so we adjust WPILib's atan2)
+        # # WPILib atan2: 0 is Forward (+X). 
+        # # To make 0 "Right", we subtract 90 degrees.
+        # target_field_angle = math.atan2(target_vector.y, target_vector.x) - (math.pi / 2)
         
-        robot_heading = robot_pose.rotation().radians()
-        relative_angle = target_field_angle - robot_heading
+        # robot_heading = robot_pose.rotation().radians()
+        # relative_angle = target_field_angle - robot_heading
         
-        # Normalize
-        while relative_angle > math.pi: relative_angle -= 2 * math.pi
-        while relative_angle < -math.pi: relative_angle += 2 * math.pi
+        # # Normalize
+        # while relative_angle > math.pi: relative_angle -= 2 * math.pi
+        # while relative_angle < -math.pi: relative_angle += 2 * math.pi
 
-        # Convert to rotations
-        target_rotations = relative_angle / (2 * math.pi)
+        # # Convert to rotations
+        # target_rotations = relative_angle / (2 * math.pi)
         
-        # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
-        target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
+        # # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
+        # target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
         
-        # Checks if the target is on the corret side of the robot and within the soft limits before moving
-        if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
-            # Within domain: Move to target
-            self.set_position(target_rotations)
-        else:
-            # Outside domain: Do nothing (or you could call self.stop())
-            # This prevents the motor from 'hunting' for a target it can't reach.
-            # self.stop()
-            pass
+        # # Checks if the target is on the corret side of the robot and within the soft limits before moving
+        # if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
+        #     # Within domain: Move to target
+        #     self.set_position(target_rotations)
+        # else:
+        #     # Outside domain: Do nothing (or you could call self.stop())
+        #     # This prevents the motor from 'hunting' for a target it can't reach.
+        #     # self.stop()
+        #     pass
 
 
     def aim_at_angle(self, target_angle_degrees: float):
@@ -258,7 +254,7 @@ class Turret(commands2.Subsystem):
 
 
 
-        # if self.TEAM_COLOR == "Blue":
+        # if self.TEAM_COLOR == DriverStation.Alliance.kBlue:
         #     if x_location < 3.5: 
         #         # If we are on the team side
                 
