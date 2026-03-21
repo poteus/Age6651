@@ -126,7 +126,7 @@ class Intake(commands2.Subsystem):
             
             self.last_shoulder_position = requested_position
             
-    def set_intake_dutyCycle(self, DC: float):
+    def set_intake_dutyCycle(self, DC: float = .6):
         '''Set the DutyCycle for the Intake Motor. DC should be between -1.0 and 1.0, where 1.0 is full forward and -1.0 is full reverse.
         '''
 

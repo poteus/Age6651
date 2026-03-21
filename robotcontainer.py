@@ -129,7 +129,7 @@ class RobotContainer:
         self._joystick.rightTrigger().whileTrue(
             commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
                 commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
-                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(.4), self.intake))
+                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(), self.intake))
         ).onFalse(commands2.cmd.runOnce(
                 lambda:self.shooter.stop(), self.shooter).alongWith(
                     commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
@@ -179,7 +179,7 @@ class RobotContainer:
 
         self._joystick.leftTrigger().whileTrue(
             commands2.cmd.run(
-                lambda: self.intake.set_intake_dutyCycle(.4))  # Placeholder RPS value for intaking
+                lambda: self.intake.set_intake_dutyCycle())  # Placeholder RPS value for intaking
         ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
         ))
 
