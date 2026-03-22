@@ -130,7 +130,7 @@ class Shooter(commands2.Subsystem):
         ]
         
         self.distance_table = np.array([44.0, 53.5, 56.0, 68.0, 87.0, 125.0, 163.0])
-        self.rpm_table = np.array([40.0, 35.0, 43.0, 38.0, 39.0, 44.0, 46.0])
+        self.rps_table = np.array([40.0, 35.0, 43.0, 38.0, 39.0, 44.0, 46.0])
         self.hood_table = np.array([0.0, 0.02, 0.0, 0.05, 0.06, 0.07, 0.08])
         
     # --- Methods ---
@@ -154,19 +154,29 @@ class Shooter(commands2.Subsystem):
         """Standard linear interpolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)"""
         return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
     
+    def shoot_rps(self, rps, hood):
+        
+        if rps != self.last_rps:
+            self.set_flywheel_rps(rps)
+            self.last_rps = rps
+        if hood != self.last_hood_rot:
+            self.set_hood_position(hood)
+            self.last_hood_rot = hood
+
     def shoot_with_distance(self):
         distance = 0
+
         if DriverStation.getAlliance() == DriverStation.Alliance.kBlue:
             distance = self.telemetry._distance_to_blue_sub.get()
         else:
             distance = self.telemetry._distance_to_red_sub.get()
-           
-        rpm = np.interp(distance, self.distance_table, self.rpm_table)
+        
+        rps = np.interp(distance, self.distance_table, self.rps_table)
         hood = np.interp(distance, self.distance_table, self.hood_table)
 
-        if rpm != self.last_rps:
-            self.set_flywheel_rps(rpm)
-            self.last_rps = rpm
+        if rps != self.last_rps:
+            self.set_flywheel_rps(rps)
+            self.last_rps = rps
         if hood != self.last_hood_rot:
             self.set_hood_position(hood)
             self.last_hood_rot = hood

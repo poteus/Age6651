@@ -9,6 +9,7 @@ import commands2
 import commands2.cmd
 from commands2.sysid import SysIdRoutine
 from commands2.button import CommandXboxController, Trigger
+from commands.CenterShoot import CenterShoot
 
 from telemetry import Telemetry
 
@@ -21,7 +22,7 @@ from subsystems.intake import Intake
 from generated.Crimson_tuner_constants import TunerConstants 
 
 import wpilib
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation, SmartDashboard, SendableChooser
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
@@ -84,8 +85,17 @@ class RobotContainer:
         self.intake = Intake()
         self.turret = Turret(self._logger)
 
+        self.sendable_chooser = SendableChooser()
+        SmartDashboard.putData("AutoChooser", self.sendable_chooser)
+
+        cmd_nothing: commands2.cmd.Command = None
+
+        self.sendable_chooser.setDefaultOption("Nothing", cmd_nothing)
+        self.sendable_chooser.addOption("CenterShoot", CenterShoot(self.shooter, self.indexer))
+
         # Configure the button bindings
         self.configureButtonBindings()
+        
 
     def configureButtonBindings(self) -> None:
         """
@@ -236,4 +246,4 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return commands2.cmd.print_("No autonomous command configured")
+        return self.sendable_chooser.getSelected() #commands2.cmd.print_("No autonomous command configured")

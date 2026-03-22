@@ -88,10 +88,10 @@ class Telemetry:
         # Create the Topic and the Subscriber
         # This will show up in Elastic under "Shooter/TargetRPS"
         self._target_rps_topic = self._shooter_table.getDoubleTopic("TargetRPS")
-        self._target_rps_sub = self._target_rps_topic.subscribe(60.0) # Default 60 RPS
+        self._target_rps_sub = self._target_rps_topic.subscribe(40.0) # Default 40 RPS
         # A publisher to confirm the value back to the dashboard
         self._target_rps_pub = self._target_rps_topic.publish()
-        self._target_rps_pub.set(60.0)
+        self._target_rps_pub.set(40.0)
 
         # This will show up in Elastic under "Shooter/ActualRPS"
         self._actual_rps_pub = self._shooter_table.getDoubleTopic("ActualRPS").publish()
@@ -100,10 +100,10 @@ class Telemetry:
         # Create the Topic and the Subscriber
         # This will show up in Elastic under "Hood/Rot"
         self._target_rot_topic = self._shooter_table.getDoubleTopic("TargetRot")
-        self._target_rot_sub = self._target_rot_topic.subscribe(40.0) # Default 40 RPS
+        self._target_rot_sub = self._target_rot_topic.subscribe(0.0) # Default 0
         # A publisher to confirm the value back to the dashboard
         self._target_rot_pub = self._target_rot_topic.publish()
-        self._target_rot_pub.set(40.0)
+        self._target_rot_pub.set(0.0)
 
         self._actual_rot_pub = self._shooter_table.getDoubleTopic("ActualRot").publish()
 
