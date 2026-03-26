@@ -12,9 +12,8 @@ class Turret(commands2.Subsystem):
     The turret subsystem controls the yaw of the shooter (subsystems.shooter)
     '''
 
-    LOWER_LIMIT = 0
+    LOWER_LIMIT = .5
     UPPER_LIMIT = 1
-
 
     blue_hub = Pose2d(0.0, 5.5, 0.0) # Update coordinates based on Alliance
     red_hub = Pose2d(16.55, 8.05, 0.0) # Update coordinates based on Alliance
@@ -101,7 +100,7 @@ class Turret(commands2.Subsystem):
         # The 'Magic Number' to align your -0.3 reading to a 0.75 turret position
         # (Target Laps * Ratio) - Current Reading 
         # 0.75 - (-0.3/10) = 0.75 - (-0.03) = 0.75 + 0.03 = 0.78
-        SENSOR_OFFSET = 0.78
+        SENSOR_OFFSET = .75 #0.78
 
         # 1. Get the current reading from the absolute encoder
         # This is currently -0.3
@@ -140,40 +139,31 @@ class Turret(commands2.Subsystem):
         """Returns current turret position in rotations (0 to 1.0)"""
         return self.motor.get_position().value
     
-    def aim_at_hub(self, robot_pose: Pose2d):
+    def aim_at_hub(self):
         ''' Calculates the angle to the hub and moves the turret. 
         Assumes 0 rotations = facing right (positive X) and positive rotations are counterclockwise. '''
+        
+        robot_angle_to_blue = self.telemetry.robotangle_to_blue_sub.get()
 
-        # # Vector from robot to hub (x,y)
-        # target_vector = self.HUB_POSITION - robot_pose.translation()
-        
-        # # Field angle (0 is Right in your system, so we adjust WPILib's atan2)
-        # # WPILib atan2: 0 is Forward (+X). 
-        # # To make 0 "Right", we subtract 90 degrees.
-        # target_field_angle = math.atan2(target_vector.y, target_vector.x) - (math.pi / 2)
-        
-        # robot_heading = robot_pose.rotation().radians()
-        # relative_angle = target_field_angle - robot_heading
-        
-        # # Normalize
-        # while relative_angle > math.pi: relative_angle -= 2 * math.pi
-        # while relative_angle < -math.pi: relative_angle += 2 * math.pi
+        # Normalize
+        while robot_angle_to_blue > 360: robot_angle_to_blue -= 360
+        while robot_angle_to_blue < 0: robot_angle_to_blue += 360
 
-        # # Convert to rotations
-        # target_rotations = relative_angle / (2 * math.pi)
+        # Convert to rotations
+        target_rotations = robot_angle_to_blue / 360
         
-        # # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
-        # target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
+        # Clamp to your -0.25 to 0.25 range to avoid hitting soft limits
+        target_rotations = max(self.LOWER_LIMIT, min(self.UPPER_LIMIT, target_rotations))
         
-        # # Checks if the target is on the corret side of the robot and within the soft limits before moving
-        # if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
-        #     # Within domain: Move to target
-        #     self.set_position(target_rotations)
-        # else:
-        #     # Outside domain: Do nothing (or you could call self.stop())
-        #     # This prevents the motor from 'hunting' for a target it can't reach.
-        #     # self.stop()
-        #     pass
+        # Checks if the target is on the corret side of the robot and within the soft limits before moving
+        if self.LOWER_LIMIT <= target_rotations <= self.UPPER_LIMIT:
+            # Within domain: Move to target
+            self.set_position(target_rotations)
+        else:
+            # Outside domain: Do nothing (or you could call self.stop())
+            # This prevents the motor from 'hunting' for a target it can't reach.
+            # self.stop()
+            pass
 
 
     def aim_at_angle(self, target_angle_degrees: float):
@@ -242,6 +232,8 @@ class Turret(commands2.Subsystem):
 
         self.telemetry._turret_rotation_pub.set(self.motor.get_position().value)
         self.telemetry._turret_encoder_pub.set(self.abs_encoder.get_absolute_position().value)
+
+        self.aim_at_hub()
 
         # team = None
 

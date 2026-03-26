@@ -9,7 +9,13 @@ import commands2
 import commands2.cmd
 from commands2.sysid import SysIdRoutine
 from commands2.button import CommandXboxController, Trigger
+
 from commands.CenterShoot import CenterShoot
+from commands.ShootIntake import ShootIntake
+from commands.ShootSimple import ShootSimple
+from commands.RunIntake import RunIntake
+from commands.ShootDistance import ShootDistance
+from commands.LowerRunIntake import LowerRunIntake
 
 from telemetry import Telemetry
 
@@ -26,6 +32,7 @@ from wpilib import DriverStation, SmartDashboard, SendableChooser
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
+from pathplannerlib.auto import NamedCommands, PathPlannerAuto, PathPlannerPath
 
 class RobotContainer:
     """
@@ -88,10 +95,12 @@ class RobotContainer:
         self.sendable_chooser = SendableChooser()
         SmartDashboard.putData("AutoChooser", self.sendable_chooser)
 
-        cmd_nothing: commands2.cmd.Command = None
+        NamedCommands.registerCommand("CenterShoot", ShootSimple(self.shooter, self.indexer))
+        NamedCommands.registerCommand("ShootDistance", ShootDistance(self.shooter, self.indexer, self.intake, False))
+        NamedCommands.registerCommand("LowerRunIntake", LowerRunIntake(self.intake))
 
-        self.sendable_chooser.setDefaultOption("Nothing", cmd_nothing)
-        self.sendable_chooser.addOption("CenterShoot", CenterShoot(self.shooter, self.indexer))
+        self.sendable_chooser.setDefaultOption("CenterShootAuto", PathPlannerAuto('CenterShootAuto'))
+        self.sendable_chooser.addOption("DepotBump", PathPlannerAuto("DepotBump"))
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -136,38 +145,45 @@ class RobotContainer:
         # Shooting and Intake Bindings ------------------------------------------------------------------------------------
 
         # Right Trigger -> Shoot+Intake+Index+ChakaChaka
-        self._joystick.rightTrigger().whileTrue(
-            commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
-                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
-                    commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(), self.intake))
-        ).onFalse(commands2.cmd.runOnce(
-                lambda:self.shooter.stop(), self.shooter).alongWith(
-                    commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
-                        commands2.cmd.runOnce(lambda:self.intake.stop())))
+        self._joystick.rightTrigger().whileTrue(ShootDistance(self.shooter, self.indexer, self.intake, True))
+
+        # self._joystick.rightTrigger().whileTrue(
+        #     commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
+        #         commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer)).alongWith(
+        #             commands2.cmd.run(lambda: self.intake.set_intake_dutyCycle(), self.intake))
+        # ).onFalse(commands2.cmd.runOnce(
+        #         lambda:self.shooter.stop(), self.shooter).alongWith(
+        #             commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)).alongWith(
+        #                 commands2.cmd.runOnce(lambda:self.intake.stop())))
+        
         
         # Right Bumper -> Shoot+Indexer+ChakaChaka
-        self._joystick.rightBumper().whileTrue(
-            commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
-                commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
-        ).onFalse(commands2.cmd.runOnce(
-                lambda:self.shooter.stop(), self.shooter).alongWith(
-                    commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)))
+        self._joystick.rightBumper().whileTrue(ShootDistance(self.shooter, self.indexer, self.intake, False))
+        # self._joystick.rightBumper().whileTrue(
+        #     commands2.cmd.run(lambda: self.shooter.shoot_control_dash(), self.shooter).alongWith(
+        #         commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
+        # ).onFalse(commands2.cmd.runOnce(
+        #         lambda:self.shooter.stop(), self.shooter).alongWith(
+        #             commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)))
         
-        # Left Trigger -> Intake only
-        self._joystick.leftTrigger().whileTrue(
-            commands2.cmd.run(
-                lambda: self.intake.set_intake_dutyCycle())  # Placeholder RPS value for intaking
-        ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
-        ))
+        # # Left Trigger -> Intake only
+        self._joystick.leftTrigger().whileTrue(RunIntake(self.intake))
+        # self._joystick.leftTrigger().whileTrue(
+        #     commands2.cmd.run(
+        #         lambda: self.intake.set_intake_dutyCycle())  # Placeholder RPS value for intaking
+        # ).onFalse(commands2.cmd.runOnce(lambda: self.intake.stop()
+        # ))
 
-        # Left Bumper -> Shoot using distance
-        self._joystick.leftBumper().whileTrue(
-            commands2.cmd.run(
-                lambda: self.shooter.shoot_with_distance(), self.shooter)
-        ).onFalse(
-            commands2.cmd.run(
-                lambda: self.shooter.stop(), self.shooter)
-        )
+        # # Left Bumper -> Shoot using distance
+        # self._joystick.leftBumper().whileTrue(
+        #     commands2.cmd.run(
+        #         lambda: self.shooter.shoot_with_distance(), self.shooter).alongWith(
+        #         commands2.cmd.run(lambda: self.indexer.indexer_control_rps(),self.indexer))
+        # ).onFalse(
+        #     commands2.cmd.run(
+        #         lambda: self.shooter.stop(), self.shooter).alongWith(
+        #             commands2.cmd.runOnce(lambda: self.indexer.stop_all(), self.indexer)))
+
 
         # ------------------------------------------------------------------------------------------------------
         
@@ -246,4 +262,5 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
-        return self.sendable_chooser.getSelected() #commands2.cmd.print_("No autonomous command configured")
+        return self.sendable_chooser.getSelected() #
+        # return commands2.cmd.print_("No autonomous command configured")

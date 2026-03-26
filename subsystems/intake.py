@@ -141,7 +141,6 @@ class Intake(commands2.Subsystem):
         self.intake.set(ControlMode.PercentOutput, 0)
         self.shoulder.stopMotor()
 
-
     def periodic(self):
         ''' Sets the idle mode to Brake when the shoulder is inside (0 rotations) and Coast when it's deployed (0.25 rotations). 
         This allows the intake to be "floating" when deployed, but tight and secure when stowed.

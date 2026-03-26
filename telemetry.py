@@ -135,6 +135,33 @@ class Telemetry:
         self._distance_to_red_pub = self._distance_to_red_topic.publish()
         self._distance_to_red_pub.set(0.0)
 
+        ####################
+
+        self._angle_table = self._inst.getTable("Angles")
+        self.angle_to_blue_topic = self._angle_table.getDoubleTopic("Field angle to blue hub")
+        self.angle_to_blue_sub = self.angle_to_blue_topic.subscribe(0.0)
+
+        self.angle_to_blue_pub = self.angle_to_blue_topic.publish()
+        self.angle_to_blue_pub.set(0.0)
+
+        self.angle_to_red_topic = self._angle_table.getDoubleTopic("Field angle to red hub")
+        self.angle_to_red_sub = self.angle_to_red_topic.subscribe(0.0)
+
+        self.angle_to_red_pub = self.angle_to_red_topic.publish()
+        self.angle_to_red_pub.set(0.0)
+
+        self.robotangle_to_blue_topic = self._angle_table.getDoubleTopic("Robot angle to blue hub")
+        self.robotangle_to_blue_sub = self.robotangle_to_blue_topic.subscribe(0.0)
+
+        self.robotangle_to_blue_pub = self.robotangle_to_blue_topic.publish()
+        self.robotangle_to_blue_pub.set(0.0)
+
+        self.robotangle_to_red_topic = self._angle_table.getDoubleTopic("Robot angle to red hub")
+        self.robotangle_to_red_sub = self.robotangle_to_red_topic.subscribe(0.0)
+
+        self.robotangle_to_red_pub = self.robotangle_to_red_topic.publish()
+        self.robotangle_to_red_pub.set(0.0)
+
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
         Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger.
@@ -158,6 +185,21 @@ class Telemetry:
         
         self._distance_to_blue_pub.set(math.dist(pose1, pose2))
         self._distance_to_red_pub.set(math.dist(pose1, pose3))
+
+        dx_blue = blue_hub.X() - state.pose.X()
+        dy_blue = blue_hub.Y() - state.pose.Y()
+
+        dx_red = red_hub.X() - state.pose.X()
+        dy_red = red_hub.Y() - state.pose.Y()
+
+        angle_to_blue = math.atan2(dy_blue, dx_blue)*180/math.pi
+        angle_to_red = math.atan2(dy_red, dx_red)*180/math.pi
+
+        self.angle_to_blue_pub.set(angle_to_blue)
+        self.angle_to_red_pub.set(angle_to_red)
+
+        self.robotangle_to_blue_pub.set(angle_to_blue-state.pose.rotation().degrees()-.1)
+        self.robotangle_to_red_pub.set(angle_to_blue-state.pose.rotation().degrees())
 
         # Also write to log file
         pose_array = [state.pose.x, state.pose.y, state.pose.rotation().degrees()]

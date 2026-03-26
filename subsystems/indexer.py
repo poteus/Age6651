@@ -108,10 +108,10 @@ class Indexer(commands2.Subsystem):
 
     def set_duty_cycle_hopper(self, DC: float):
         ''' Sets Duty Cycle to Hopper motor '''
-        if DC > .4:
-            DC = .4
-        elif DC < -.4:
-            DC =-.4
+        if DC > .8:
+            DC = .8
+        elif DC < -.8:
+            DC =-.8
 
         self.hopper.set(DC)
 
@@ -125,10 +125,10 @@ class Indexer(commands2.Subsystem):
         back_target = rps * (7.0 / 5.0)
         self.back_loop.setReference(back_target, SparkMax.ControlType.kVelocity)
 
-    def run(self):
+    def run(self, index_vel: float=50, hopper_vel: float=.8):
         ''' Starts the indexer and the hopper (ChakaChaka Bum Bum)'''
-        self.set_velocity(40)
-        self.set_duty_cycle_hopper(.6)
+        self.set_velocity(index_vel)
+        self.set_duty_cycle_hopper(hopper_vel)
         #self.chakachaka()
 
     def stop_all(self):
@@ -147,19 +147,8 @@ class Indexer(commands2.Subsystem):
 
         # Check if the shooter is actually ready
         is_ready = self.shooter.reach_rps() #and self.shooter.reach_hood_position()
-
         if is_ready:
-            # Only send the CAN frame if the target has actually changed
-            # OR if we were previously stopped and now we are starting
-            if self.last_indexer_rps == 0:
-                self.run()
-                self.last_indexer_rps = 40
-        else:
-            # If the shooter isn't ready, we MUST stop.
-            # We check if last_indexer_rps != 0 so we don't spam 'stop' repeatedly.
-            if self.last_indexer_rps != 0:
-                self.stop_all()
-                self.last_indexer_rps = 0
+            self.run()
 
     def chakachaka(self):
         ''' Goes forward 2 laps then backward 2 lap to shake loose any stuck fuel. '''

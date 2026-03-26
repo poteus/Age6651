@@ -119,20 +119,27 @@ class Shooter(commands2.Subsystem):
         # --- Data Points for Tuning ---
         # Format: (Distance in Inches, Flywheel RPS, Hood Rotations)
         self.tuning_table = [
-            (44.0, 40.0, 0.0), # Close
-            (56.0, 43.0, 0.0),
-            # (68, 45, 0),
-            (68, 38, 0.05),
-            (53.5, 35, 0.02),
-            (87, 39, .06),
-            (125, 44, .07),
-            (163, 46, .08)
+            (44.0, 31.0, 0.0), # 1.094
+            (48.0, 32.0, 0.0), # 1.219
+            (53.5, 33, 0.00),  # 1.3589
+            (68, 34, 0.00),    # 1.7272
+            (87, 36, 0.03),    # 2.2098
+            (125, 38, 0.05),   # 3.175
+            (163, 46, 0.07)    # 4.1402
         ]
-        
-        self.distance_table = np.array([44.0, 53.5, 56.0, 68.0, 87.0, 125.0, 163.0])
-        self.rps_table = np.array([40.0, 35.0, 43.0, 38.0, 39.0, 44.0, 46.0])
-        self.hood_table = np.array([0.0, 0.02, 0.0, 0.05, 0.06, 0.07, 0.08])
-        
+
+        # Unzip the table into three separate lists
+        # zip(*...) takes the list of tuples and returns three tuples of columns
+        distances_in, rps, hood = zip(*self.tuning_table)
+
+        # Convert to numpy arrays and handle the unit conversion
+        # Conversion factor: 1 inch = 0.0254 meters
+        INCHES_TO_METERS = 0.0254
+
+        self.distance_table = np.array(distances_in) * INCHES_TO_METERS
+        self.rps_table = np.array(rps)
+        self.hood_table = np.array(hood)
+                
     # --- Methods ---
     def set_flywheel_rps(self, rps: float):
         """Sets flywheel speed using Torque-Current FOC."""
@@ -173,6 +180,8 @@ class Shooter(commands2.Subsystem):
         
         rps = np.interp(distance, self.distance_table, self.rps_table)
         hood = np.interp(distance, self.distance_table, self.hood_table)
+
+        print(f"rps: {rps} - hood: {hood}")
 
         if rps != self.last_rps:
             self.set_flywheel_rps(rps)

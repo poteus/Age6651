@@ -245,7 +245,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         AutoBuilder.configure(
             self.getPose, # Robot pose supplier
             self.reset_pose, # Method to reset odometry (will be called if your auto has a starting pose)
-            lambda: self.get_state().speeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             lambda speeds, feedforwards: self.driveRobotRelative(speeds), # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
             PPHolonomicDriveController( # PPHolonomicController is the built in path following controller for holonomic drive trains
                 PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
@@ -261,7 +261,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
 
         self.seed_pigeon_with_vision()
 
-    def shouldFlipPath():
+    def shouldFlipPath(self):
         # Boolean supplier that controls when the path will be mirrored for the red alliance
         # This will flip the path being followed to the red side of the field.
         # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
@@ -270,8 +270,23 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
     def getPose(self):
         return self.get_state().pose
     
-    def getRobotRelativeSpeeds(self):
-        return self.m
+    def getRobotRelativeSpeeds(self) -> ChassisSpeeds:
+        """Returns the robot-relative ChassisSpeeds from the drivetrain state."""
+        return self.get_state().speeds
+    
+    def driveRobotRelative(self, speeds: ChassisSpeeds):
+        """
+        Takes robot-relative ChassisSpeeds from PathPlanner 
+        and applies them using a RobotCentric swerve request.
+        """
+        # Create a RobotCentric request. PathPlanner provides speeds in m/s and rad/s.
+        request = swerve.requests.RobotCentric() \
+            .with_velocity_x(speeds.vx) \
+            .with_velocity_y(speeds.vy) \
+            .with_rotational_rate(speeds.omega)
+        
+        # Send the control request to the modules
+        self.set_control(request)
 
     def apply_request(
         self, request: Callable[[], swerve.requests.SwerveRequest]
